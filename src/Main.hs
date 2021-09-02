@@ -12,18 +12,19 @@ import Control.Monad (void)
 import Data.Bifunctor (Bifunctor (second))
 import Data.HashMap.Strict as H (empty, fromList, union)
 import Data.Text (Text, pack, unpack)
+import Data.Version (showVersion)
 import Evaluator.Evaluator (evaluateExpression)
 import Parser.Ast (VDataType (Float, Int, NilType, String))
 import Parser.Parser (exprs, root)
+import Paths_axolotl (version)
 import System.Console.Pretty
-  ( Color (Green, Red, Yellow),
+  ( Color (Red),
     Pretty (color, style),
     Style (Bold),
   )
 import System.Environment.Blank (getArgs)
 import System.IO (hPutStr, hPutStrLn, stderr, stdout)
 import Text.Megaparsec (errorBundlePretty, parse)
-import Text.Pretty.Simple (pPrint)
 
 makeForeignFunction :: VDataType -> Def
 makeForeignFunction ret = AU.Function ret [] [] True
@@ -77,6 +78,7 @@ main = do
     1 -> case head args of
       "run" -> main' "index.axl"
       "transpile" -> logError "transpilation is still wip"
+      "version" -> putStrLn $ showVersion version
       _ -> logError $ "unknown action '" <> head args <> "'"
     2 -> case head args of
       "run" -> main' $ last args

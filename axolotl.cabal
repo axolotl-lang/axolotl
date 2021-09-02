@@ -21,6 +21,7 @@ executable axl
                     , Analyser.Util
                     , Evaluator.Evaluator
                     , Evaluator.NativeFns
+                    , Paths_axolotl
 
     build-depends:    base ^>=4.14.2.0
                     , unordered-containers
