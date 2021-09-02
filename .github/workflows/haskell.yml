@@ -1,20 +1,57 @@
-name: "Bob The Builder"
+name: Bob the Builder
 
 on:
+  pull_request:
   push:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    container:
-      image: haskell:9
+  cabal:
+    name: ${{ matrix.os }} / ghc ${{ matrix.ghc }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+        cabal: ["3.4.0.0"]
+        ghc: ["8.10.5"]
+
     steps:
-      - uses: actions/checkout@v2
-      - run: cabal update
-      - run: sed -i 's/4\.14\.2\.0/4\.15\.0\.0/g' $GITHUB_WORKSPACE/axolotl.cabal
-      - run: WORKSPACE="$GITHUB_WORKSPACE" bash $GITHUB_WORKSPACE/build.sh
-      - uses: actions/upload-artifact@v2
-        with:
-          name: axl
-          path: ${{ github.workspace }}/axl
+    - uses: actions/checkout@v2
+
+    - uses: haskell/actions/setup@v1
+      id: setup-haskell-cabal
+      name: Setup Haskell
+      with:
+        ghc-version: ${{ matrix.ghc }}
+        cabal-version: ${{ matrix.cabal }}
+        enable-stack: false
+
+    - name: Cache ~/.cabal/packages, ~/.cabal/store and dist-newstyle
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cabal/packages
+          ~/.cabal/store
+          ${{ github.workspace }}/dist-newstyle
+        key: ${{ runner.os }}-${{ matrix.ghc }}
+
+    - name: Update
+      run: cabal update
+
+    - name: Install dependencies
+      run: cabal new-build -O2 --disable-debug-info --enable-executable-stripping --enable-library-stripping --disable-debug-info --disable-library-for-ghci all --only-dependencies
+      working-directory: ${{ github.workspace }}
+
+    - name: Build
+      run: cabal new-build -O2 --disable-debug-info --enable-executable-stripping --enable-library-stripping --disable-debug-info --disable-library-for-ghci all
+      working-directory: ${{ github.workspace }}
+
+    - name: Copy executable
+      run: cp dist-newstyle/build/x86_64-*/ghc-*/axolotl-*/x/axl/opt/build/axl/axl$(if [ "$RUNNER_OS" == "Windows" ]; then echo ".exe"; else echo ""; fi) axl
+      shell: bash
+      working-directory: ${{ github.workspace }}
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: axl-${{ runner.os }}
+        path: ${{ github.workspace }}/axl
