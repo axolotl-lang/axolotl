@@ -1,0 +1,25 @@
+cradle:
+  cabal:
+    - path: "src/Main.hs"
+      component: "axolotl:exe:axl"
+
+    - path: "src/Parser/Ast.hs"
+      component: "axolotl:exe:axl"
+
+    - path: "src/Parser/Combinators.hs"
+      component: "axolotl:exe:axl"
+
+    - path: "src/Parser/Parser.hs"
+      component: "axolotl:exe:axl"
+
+    - path: "src/Analyser/Analyser.hs"
+      component: "axolotl:exe:axl"
+
+    - path: "src/Analyser/Util.hs"
+      component: "axolotl:exe:axl"
+
+    - path: "src/Evaluator/Evaluator.hs"
+      component: "axolotl:exe:axl"
+
+    - path: "src/Evaluator/NativeFns.hs"
+      component: "axolotl:exe:axl"

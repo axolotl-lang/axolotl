@@ -1,0 +1,20 @@
+name: "Bob The Builder"
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: haskell:9
+    steps:
+      - uses: actions/checkout@v2
+      - run: cabal update
+      - run: sed -i 's/4\.14\.2\.0/4\.15\.0\.0/g' $GITHUB_WORKSPACE/axolotl.cabal
+      - run: WORKSPACE="$GITHUB_WORKSPACE" bash $GITHUB_WORKSPACE/build.sh
+      - uses: actions/upload-artifact@v2
+        with:
+          name: axl
+          path: ${{ github.workspace }}/axl

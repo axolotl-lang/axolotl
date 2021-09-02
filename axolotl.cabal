@@ -1,0 +1,37 @@
+cabal-version:      2.4
+
+name:               axolotl
+version:            0.1.0.0
+synopsis:           a statically typed lisp-like programming language
+author:             Udit Karode <udit.karode@gmail.com>
+category:           Language
+bug-reports:        https://github.com/uditkarode/axolotl/issues
+maintainer:         Udit Karode <udit.karode@gmail.com>
+
+license:        GPL-3.0-or-later
+license-file:   LICENSE
+
+executable axl
+    main-is:          Main.hs
+
+    other-modules:    Parser.Ast
+                    , Parser.Combinators
+                    , Parser.Parser
+                    , Analyser.Analyser
+                    , Analyser.Util
+                    , Evaluator.Evaluator
+                    , Evaluator.NativeFns
+
+    build-depends:    base ^>=4.14.2.0
+                    , unordered-containers
+                    , string-conversions
+                    , pretty-terminal
+                    , pretty-simple
+                    , megaparsec
+                    , either
+                    , text
+    hs-source-dirs:   src
+    default-extensions: OverloadedStrings
+                      , LambdaCase
+                      , BlockArguments
+    default-language: Haskell2010

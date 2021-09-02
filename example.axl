@@ -1,0 +1,23 @@
+(def name (str "hi, " "i am" " udit!"))
+(print (str name " nice to meet you"))
+
+(print "this is my programming language, axolotl")
+
+(defun get-given-count [(argument-for-no-reason: int)] {
+  (+i argument-for-no-reason 1)
+})
+
+(def text1 "If I have ")
+(def text2 " apples to everyone, i'll be left with ")
+
+(defun arbitrary-function [(initial: int)] {
+  (print "expressions are written in braces")
+  (print "and the last value is returned!")
+  (print (str text1 (+i initial 2) " apples and I give " (get-given-count 2) text2 (/f (+i initial 2) (get-given-count 4)) " apples!"))
+  420
+})
+
+(def initial 37)
+
+(print (arbitrary-function initial))
+
