@@ -129,16 +129,40 @@ semCheckExprs acc curr = do
           case def of
             Analyser.Util.Variable v _ -> case v of
               Parser.Ast.Function expArgs _ ->
-                maybe
-                  (tfst acc, tsnd acc, tthd acc <> [Right infExpr])
-                  makeLeft
-                  (checkArgs expArgs (makeDtArr acc args) name)
+                -- TODO: remove this equality hack when variable args are available
+                if (length expArgs /= length args) && (name /= "print") && (name /= "str")
+                  then
+                    makeLeft $
+                      "expected "
+                        <> (T.pack . show) (length expArgs)
+                        <> " arguments, got "
+                        <> (T.pack . show) (length args)
+                        <> " in call to function '"
+                        <> name
+                        <> "'"
+                  else
+                    maybe
+                      (tfst acc, tsnd acc, tthd acc <> [Right infExpr])
+                      makeLeft
+                      (checkArgs expArgs (makeDtArr acc args) name)
               x -> makeLeft $ "Variable of type '" <> pack (show x) <> "' is not callable"
             Analyser.Util.Function vdt expArgs _ frgn ->
-              maybe
-                (tfst acc, tsnd acc, tthd acc <> [Right infExpr])
-                makeLeft
-                (checkArgs (map snd expArgs) (makeDtArr acc args) name)
+              -- TODO: remove this equality hack when variable args are available
+              if (length expArgs /= length args) && (name /= "print") && (name /= "str")
+                then
+                  makeLeft $
+                    "expected "
+                      <> (T.pack . show) (length expArgs)
+                      <> " arguments, got "
+                      <> (T.pack . show) (length args)
+                      <> " in call to function '"
+                      <> name
+                      <> "'"
+                else
+                  maybe
+                    (tfst acc, tsnd acc, tthd acc <> [Right infExpr])
+                    makeLeft
+                    (checkArgs (map snd expArgs) (makeDtArr acc args) name)
             Analyser.Util.Argument vdt -> undefined -- TODO
         VariableDef name vtype expr -> case H.lookup name (tfst acc) of
           Nothing -> do
