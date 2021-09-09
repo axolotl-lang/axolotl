@@ -57,6 +57,9 @@ getTypeFromExpr ex gd = case ex of
         x -> Left $ "Variable of type '" <> pack (show x) <> "' is not callable"
       Analyser.Util.Function vdt _ _ _ -> Right vdt
       Analyser.Util.Argument vdt -> undefined -- TODO
+  ArbitraryBlock exprs -> getTypeFromExpr (last exprs) gd
+  -- semCheckExprs will bail out if type of ift /= type of iff
+  Conditional cond ift iff -> getTypeFromExpr ift gd
   VariableDef {} -> Right NilType
   FunctionDef {} -> Right NilType
   AnonymousFunction {} -> undefined -- TODO
