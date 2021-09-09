@@ -76,6 +76,9 @@ functionDef = parens func
       body <- braces exprs
       pure $ uncurry FunctionDef id args body False
 
+arbitraryBlock :: Parser Expr
+arbitraryBlock = braces $ many expr >>= \x -> pure $ ArbitraryBlock x
+
 functionCall :: Parser Expr
 functionCall = parens identifier >>= \x -> FunctionCall x <$> exprs
 
@@ -110,6 +113,7 @@ expr =
     <|> try variableDef
     <|> try conditional
     <|> functionCall
+    <|> arbitraryBlock
     <|> unary
 
 exprs :: Parser [Expr]
