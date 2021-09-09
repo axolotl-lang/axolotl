@@ -250,9 +250,10 @@ semCheckExprs acc curr = do
             case r of
               Left txt -> makeLeft txt
               Right dvdt -> do
+                let gdi = Analyser.Util.Function (if inferred then fromRight' r else vtype) args body frgn
                 let res =
-                      ( insert name (Analyser.Util.Function (if inferred then fromRight' r else vtype) args body frgn) (tfst acc),
-                        insert name (H.delete name (tfst result)) (tsnd acc),
+                      ( insert name gdi (tfst acc),
+                        insert name (H.fromList [(name, gdi)] `H.union` tfst result) (tsnd acc),
                         tthd acc
                           <> [ sequence (tthd result) >>= \v ->
                                  r
