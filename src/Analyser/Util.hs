@@ -12,6 +12,9 @@ data Def
   = Variable VDataType Expr
   | Function VDataType [(Text, VDataType)] [Expr] Bool
   | Argument VDataType
+  | -- this is used to allow recursive calls
+    -- and to check if they are proper
+    IncompleteFunction [(Text, VDataType)]
   deriving (Show, Eq)
 
 type GDefs = HashMap Text Def
@@ -49,6 +52,7 @@ getTypeFromExpr ex gd = case ex of
       Analyser.Util.Variable _ expr -> getTypeFromExpr expr gd
       Analyser.Util.Function _ args expr frgn -> undefined -- TODO
       Analyser.Util.Argument vdt -> Right vdt
+      Analyser.Util.IncompleteFunction vdt -> undefined -- TODO
   FunctionCall name args -> do
     def <- maybeToRight ("call to undefined function '" <> name <> "'") (H.lookup name gd)
     case def of
@@ -57,6 +61,7 @@ getTypeFromExpr ex gd = case ex of
         x -> Left $ "Variable of type '" <> pack (show x) <> "' is not callable"
       Analyser.Util.Function vdt _ _ _ -> Right vdt
       Analyser.Util.Argument vdt -> undefined -- TODO
+      Analyser.Util.IncompleteFunction vdt -> Right Inferred
   ArbitraryBlock exprs -> getTypeFromExpr (last exprs) gd
   -- semCheckExprs will bail out if type of ift /= type of iff
   Conditional cond ift iff -> getTypeFromExpr ift gd

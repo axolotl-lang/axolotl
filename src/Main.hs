@@ -67,7 +67,7 @@ main' fileName = do
       let out = analyseAst res (H.fromList defs)
       case tfst out of
         Left txt -> logError $ Data.Text.unpack txt
-        --Right ex -> pPrint ex -- void $ evaluateExpression (tsnd out) (tthd out) ex
+        -- Right ex -> pPrint (tthd out) -- void $ evaluateExpression (tsnd out) (tthd out) ex
         Right ex -> void $ evaluateExpression (tsnd out) (tthd out) ex
 
 main :: IO ()

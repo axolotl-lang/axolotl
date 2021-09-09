@@ -1,7 +1,7 @@
 module Analyser.Analyser where
 
 import Analyser.Util
-  ( Def (Argument, Function, Variable),
+  ( Def (Argument, Function, IncompleteFunction, Variable),
     GDefs,
     LDefs,
     getTypeFromArr,
@@ -13,7 +13,7 @@ import Analyser.Util
   )
 import Data.Bifunctor (second)
 import Data.Either.Combinators (fromLeft', fromRight, fromRight', isLeft, maybeToRight)
-import Data.HashMap.Strict as H (HashMap, empty, findWithDefault, fromList, insert, lookup, union)
+import Data.HashMap.Strict as H (HashMap, delete, empty, findWithDefault, fromList, insert, lookup, union)
 import Data.Maybe (fromJust, fromMaybe, isJust)
 import Data.Text as T (Text, empty, pack, toLower, unpack)
 import Debug.Trace (trace)
@@ -164,6 +164,23 @@ semCheckExprs acc curr = do
                     makeLeft
                     (checkArgs (map snd expArgs) (makeDtArr acc args) name)
             Analyser.Util.Argument vdt -> undefined -- TODO
+            Analyser.Util.IncompleteFunction expArgs -> do
+              -- TODO: remove this equality hack when variable args are available
+              if (length expArgs /= length args) && (name /= "print") && (name /= "str")
+                then
+                  makeLeft $
+                    "expected "
+                      <> (T.pack . show) (length expArgs)
+                      <> " arguments, got "
+                      <> (T.pack . show) (length args)
+                      <> " in call to function '"
+                      <> name
+                      <> "'"
+                else
+                  maybe
+                    (tfst acc, tsnd acc, tthd acc <> [Right infExpr])
+                    makeLeft
+                    (checkArgs (map snd expArgs) (makeDtArr acc args) name)
         VariableDef name vtype expr -> case H.lookup name (tfst acc) of
           Nothing -> do
             let res =
@@ -223,7 +240,7 @@ semCheckExprs acc curr = do
             let result =
                   foldl
                     semCheckExprs
-                    (tfst acc `union` H.fromList (map (second Argument) args), H.empty, [])
+                    (tfst acc `union` H.fromList ([(name, IncompleteFunction args)] <> map (second Argument) args), H.empty, [])
                     body
             let r =
                   getTypeFromExpr
@@ -235,7 +252,7 @@ semCheckExprs acc curr = do
               Right dvdt -> do
                 let res =
                       ( insert name (Analyser.Util.Function (if inferred then fromRight' r else vtype) args body frgn) (tfst acc),
-                        insert name (tfst result) (tsnd acc),
+                        insert name (H.delete name (tfst result)) (tsnd acc),
                         tthd acc
                           <> [ sequence (tthd result) >>= \v ->
                                  r

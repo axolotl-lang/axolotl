@@ -34,7 +34,8 @@ evaluateExpression gd ld (Variable x) = case fromJust (H.lookup x gd) of
   -- argument values will be added as AU.Variable
   -- during the AnonymousFunction call
   AU.Argument _ -> error "should never happen"
--- replace with the result of application of unary operator
+  AU.IncompleteFunction args -> undefined -- TODO
+  -- replace with the result of application of unary operator
 evaluateExpression gd ld (Unary op expr) = case expr of
   -- right now there's only one unary operator
   -- but when there's more, we'll need to pattern
@@ -57,6 +58,7 @@ evaluateExpression gd ld (FunctionCall name argExprs) = do
       evArgs <- Prelude.mapM (evaluateExpression gd ld) argExprs
       evalNative name vdt evArgs
     AU.Argument vdt -> undefined -- TODO
+    AU.IncompleteFunction args -> undefined -- TODO
 evaluateExpression gd ld (Conditional cond ift iff) = do
   cond' <- evaluateExpression gd ld cond
   case cond' of
