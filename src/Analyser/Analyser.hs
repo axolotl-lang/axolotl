@@ -18,7 +18,7 @@ import Data.Maybe (fromJust, fromMaybe, isJust)
 import Data.Text as T (Text, empty, pack, toLower, unpack)
 import Debug.Trace (trace)
 import Parser.Ast
-  ( Expr (Array, Conditional, FunctionCall, FunctionDef, Nil, Root, Variable, VariableDef),
+  ( Expr (ArbitraryBlock, Array, Conditional, FunctionCall, FunctionDef, Nil, Root, Variable, VariableDef),
     VDataType (Bool, Function, Inferred, NilType),
   )
 
@@ -203,6 +203,20 @@ semCheckExprs acc curr = do
                         <> " and "
                         <> (T.pack . show) t2
               _ -> makeLeft "condition in conditional doesn't return a bool"
+        ArbitraryBlock body -> do
+          let result =
+                foldl
+                  semCheckExprs
+                  (tfst acc, H.empty, [])
+                  body
+          let r = getTypeFromExpr (if null body then Nil else last body) (tfst result `union` tfst acc)
+          ( tfst acc,
+            tsnd acc,
+            tthd acc
+              <> [ sequence (tthd result) >>= \v ->
+                     r >>= \t -> Right $ ArbitraryBlock v
+                 ]
+            )
         FunctionDef name vtype args body frgn -> case H.lookup name (tfst acc) of
           Just _ -> (H.empty, H.empty, [Left $ "Redefinition of function " <> name])
           Nothing -> do
