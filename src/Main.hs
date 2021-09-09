@@ -25,6 +25,7 @@ import System.Console.Pretty
 import System.Environment.Blank (getArgs)
 import System.IO (hPutStr, hPutStrLn, stderr, stdout)
 import Text.Megaparsec (errorBundlePretty, parse)
+import Text.Pretty.Simple (pPrint)
 
 makeForeignFunction :: VDataType -> Def
 makeForeignFunction ret = AU.Function ret [] [] True
@@ -59,15 +60,14 @@ main' fileName = do
           ("print", NilType),
           ("str", String)
         ]
-  let defs = rFoldl stdlib H.empty $ \acc curr ->
-        acc
-          `H.union` H.fromList [second makeForeignFunction curr]
+  let defs = map (second makeForeignFunction) stdlib
   case result of
     Left e -> putStrLn (errorBundlePretty e)
     Right res -> do
-      let out = analyseAst res defs
+      let out = analyseAst res (H.fromList defs)
       case tfst out of
         Left txt -> logError $ Data.Text.unpack txt
+        --Right ex -> pPrint ex -- void $ evaluateExpression (tsnd out) (tthd out) ex
         Right ex -> void $ evaluateExpression (tsnd out) (tthd out) ex
 
 main :: IO ()
