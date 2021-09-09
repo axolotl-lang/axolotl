@@ -77,7 +77,10 @@ functionDef = parens func
       pure $ uncurry FunctionDef id args body False
 
 functionCall :: Parser Expr
-functionCall = parens $ identifier >>= \x -> FunctionCall x <$> exprs
+functionCall = parens identifier >>= \x -> FunctionCall x <$> exprs
+
+conditional :: Parser Expr
+conditional = parens $ rword "if" >> Conditional <$> expr <*> expr <*> expr
 
 arraySupportedExpr :: Parser Expr
 arraySupportedExpr =
@@ -105,6 +108,7 @@ expr =
     <|> try functionDef
     <|> try foreignFunctionDef
     <|> try variableDef
+    <|> try conditional
     <|> functionCall
     <|> unary
 

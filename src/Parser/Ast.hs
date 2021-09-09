@@ -32,5 +32,7 @@ data Expr
   | FunctionDef Text VDataType [(Text, VDataType)] [Expr] Bool
   | FunctionCall Text [Expr] -- like (print "hello")
   | AnonymousFunction VDataType [(Text, VDataType)] [Expr]
-  | Root [Expr]
+  | ArbitraryBlock [Expr] -- a random block of exprs like { 2 }
+  | Conditional Expr Expr Expr -- (if cond iftrue iffalse)
+  | Root [Expr] -- a set of all exprs in file
   deriving (Show, Eq)
