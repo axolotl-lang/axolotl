@@ -80,7 +80,7 @@ arbitraryBlock :: Parser Expr
 arbitraryBlock = braces $ many expr >>= \x -> pure $ ArbitraryBlock x
 
 functionCall :: Parser Expr
-functionCall = parens identifier >>= \x -> FunctionCall x <$> exprs
+functionCall = parens $ identifier >>= \x -> FunctionCall x <$> exprs
 
 conditional :: Parser Expr
 conditional = parens $ rword "if" >> Conditional <$> expr <*> expr <*> expr
