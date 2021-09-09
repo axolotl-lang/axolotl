@@ -57,7 +57,13 @@ evaluateExpression gd ld (FunctionCall name argExprs) = do
       evArgs <- Prelude.mapM (evaluateExpression gd ld) argExprs
       evalNative name vdt evArgs
     AU.Argument vdt -> undefined -- TODO
+evaluateExpression gd ld (Conditional cond ift iff) = do
+  cond' <- evaluateExpression gd ld cond
+  case cond' of
+    BoolLiteral x -> evaluateExpression gd ld (if x then ift else iff)
+    _ -> error "condition returned non-bool value during evaluation"
 evaluateExpression gd ld (AnonymousFunction ret args body) = evaluateExpression gd ld (Root body)
+evaluateExpression gd ld (ArbitraryBlock body) = evaluateExpression gd ld (Root body)
 evaluateExpression gd ld VariableDef {} = pure Nil
 evaluateExpression gd ld FunctionDef {} = pure Nil
 evaluateExpression gd ld r = pure r
