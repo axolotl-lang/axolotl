@@ -6,6 +6,7 @@ import Analyser.Util
     LDefs,
     getTypeFromArr,
     getTypeFromExpr,
+    isFnCall,
     rFoldl,
     tfst,
     tsnd,
@@ -242,11 +243,12 @@ semCheckExprs acc curr = do
                     semCheckExprs
                     (tfst acc `union` H.fromList ([(name, IncompleteFunction args)] <> map (second Argument) args), H.empty, [])
                     body
-            let r =
-                  getTypeFromExpr
-                    (if null body then Nil else last body)
-                    (tfst result `union` tfst acc)
+            let lx = if null body then Nil else last body
             let inferred = vtype == Inferred
+            let r =
+                  if isFnCall name lx && inferred
+                    then Left $ "cannot infer the return type of function '" <> name <> "' that returns a call to itself"
+                    else getTypeFromExpr lx (tfst result `union` tfst acc)
             case r of
               Left txt -> makeLeft txt
               Right dvdt -> do

@@ -37,6 +37,11 @@ getTypeFromArr :: VDataType -> VDataType
 getTypeFromArr (ArrayOf x) = x
 getTypeFromArr y = error "getTypeFromArr is only for ArrayOf"
 
+isFnCall :: Text -> Expr -> Bool
+isFnCall name' expr = case expr of
+  FunctionCall name args -> name == name'
+  _ -> False
+
 getTypeFromExpr :: Expr -> GDefs -> Either Text VDataType
 getTypeFromExpr ex gd = case ex of
   IntLiteral {} -> Right Int
