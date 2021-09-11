@@ -28,7 +28,7 @@ data Expr
   | VariableDef Text VDataType Expr -- like (def username 20)
   | Unary UnaryOp Expr -- only - (for now)
   -- like (defun (function-name: VDataType) (arg1: DataType, arg2: DataType) { ... })
-  -- the bool is true if the function is a foreign function
+  -- the bool is true if the function is a native function
   | FunctionDef Text VDataType [(Text, VDataType)] [Expr] Bool
   | FunctionCall Text [Expr] -- like (print "hello")
   | AnonymousFunction VDataType [(Text, VDataType)] [Expr]

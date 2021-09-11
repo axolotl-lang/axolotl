@@ -58,11 +58,11 @@ variableDef =
       expr >>= \y ->
         pure $ uncurry VariableDef x y
 
-foreignFunctionDef :: Parser Expr
-foreignFunctionDef = parens func
+nativeFunctionDef :: Parser Expr
+nativeFunctionDef = parens func
   where
     func = do
-      rword "foreign defun"
+      rword "native defun"
       id <- identifierWithType
       pure $ uncurry FunctionDef id [] [] True
 
@@ -109,7 +109,7 @@ expr =
     <|> nil
     <|> variable
     <|> try functionDef
-    <|> try foreignFunctionDef
+    <|> try nativeFunctionDef
     <|> try variableDef
     <|> try conditional
     <|> functionCall

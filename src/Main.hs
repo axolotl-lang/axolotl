@@ -27,8 +27,8 @@ import System.IO (hPutStr, hPutStrLn, stderr, stdout)
 import Text.Megaparsec (errorBundlePretty, parse)
 import Text.Pretty.Simple (pPrint)
 
-makeForeignFunction :: VDataType -> Def
-makeForeignFunction ret = AU.Function ret [] [] True
+makeNativeFunction :: VDataType -> Def
+makeNativeFunction ret = AU.Function ret [] [] True
 
 logError :: String -> IO ()
 logError toLog = do
@@ -60,7 +60,7 @@ main' fileName = do
           ("print", NilType),
           ("str", String)
         ]
-  let defs = map (second makeForeignFunction) stdlib
+  let defs = map (second makeNativeFunction) stdlib
   case result of
     Left e -> putStrLn (errorBundlePretty e)
     Right res -> do
