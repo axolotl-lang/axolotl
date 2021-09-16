@@ -210,16 +210,19 @@ semCheckExprs acc curr = do
             Left txt -> makeLeft txt
             Right vdt -> case vdt of
               Bool -> do
-                let t1 = getTypeFromExpr ift (tfst acc)
-                let t2 = getTypeFromExpr iff (tfst acc)
-                if t1 == t2
-                  then (tfst acc, tsnd acc, tthd acc <> [Right $ Conditional cond ift iff])
-                  else
-                    makeLeft $
-                      "expected both conditional branches to return the same type, instead got "
-                        <> (T.pack . show) t1
-                        <> " and "
-                        <> (T.pack . show) t2
+                case getTypeFromExpr ift (tfst acc) of
+                  Left txt -> makeLeft txt
+                  Right t1 -> case getTypeFromExpr iff (tfst acc) of
+                    Left txt -> makeLeft txt
+                    Right t2 -> do
+                      if t1 == t2
+                        then (tfst acc, tsnd acc, tthd acc <> [Right $ Conditional cond ift iff])
+                        else
+                          makeLeft $
+                            "expected both conditional branches to return the same type, instead got "
+                              <> (T.pack . show) t1
+                              <> " and "
+                              <> (T.pack . show) t2
               _ -> makeLeft "condition in conditional doesn't return a bool"
         ArbitraryBlock body -> do
           let result =
