@@ -51,7 +51,7 @@ getTypeOfExpr ex gd = case ex of
   BoolLiteral {} -> Right Bool
   Array exs -> getTypeOfExpr (head exs) gd >>= \t -> Right $ ArrayOf t
   Nil -> Right NilType
-  Parser.Ast.Variable name -> do
+  VariableUsage name -> do
     def <- maybeToRight ("use of undefined variable '" <> name <> "'") (H.lookup name gd)
     case def of
       Analyser.Util.Variable _ expr -> getTypeOfExpr expr gd

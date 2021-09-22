@@ -19,7 +19,7 @@ import Data.Maybe (fromJust, fromMaybe, isJust)
 import Data.Text as T (Text, empty, pack, toLower, unpack)
 import Debug.Trace (trace)
 import Parser.Ast
-  ( Expr (ArbitraryBlock, Array, Conditional, FunctionCall, FunctionDef, Nil, Root, Variable, VariableDef),
+  ( Expr (ArbitraryBlock, Array, Conditional, FunctionCall, FunctionDef, Nil, Root, VariableDef),
     VDataType (Bool, Function, Inferred, NilType),
   )
 

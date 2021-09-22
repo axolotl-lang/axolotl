@@ -24,7 +24,7 @@ data Expr
   | BoolLiteral Bool -- like true
   | Array [Expr]
   | Nil -- only nil
-  | Variable Text -- like username
+  | VariableUsage Text -- like username
   | VariableDef Text VDataType Expr -- like (def username 20)
   | Unary UnaryOp Expr -- only - (for now)
   -- like (defun (function-name: VDataType) (arg1: DataType, arg2: DataType) { ... })
