@@ -1,6 +1,6 @@
 module Main where
 
-import Analyser.Analyser (analyseAst, analyseAst')
+import Analyser.Analyser (analyseAst)
 import Analyser.Util as AU
   ( Def (Function),
     rFoldl,

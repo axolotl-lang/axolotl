@@ -113,9 +113,3 @@ analyseAst (Root x) gd = do
   let t = runState (foldl analyseExprs (pure []) x) (H.empty, H.empty)
   (sequence (fst t) >>= \v -> Right (Root v), (fst . snd) t, (snd . snd) t)
 analyseAst _ _ = undefined
-
-analyseAst' :: Expr -> Either Text Expr
-analyseAst' (Root x) = do
-  let t = runState (foldl analyseExprs (pure []) x) (H.empty, H.empty)
-  sequence (fst t) >>= \v -> Right (Root v)
-analyseAst' _ = undefined
