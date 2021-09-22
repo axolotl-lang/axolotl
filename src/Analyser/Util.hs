@@ -1,7 +1,7 @@
 module Analyser.Util where
 
 import Data.Either.Combinators (maybeToLeft, maybeToRight)
-import Data.HashMap.Strict as H (HashMap, lookup)
+import Data.HashMap.Strict as H (HashMap, empty, lookup)
 import Data.Text as T (Text, pack)
 import Parser.Ast
   ( Expr (..),
@@ -21,8 +21,15 @@ type GDefs = HashMap Text Def
 
 type LDefs = HashMap Text GDefs
 
+type Env = (GDefs, LDefs)
+
+type AnalyserResult = [Either Text Expr]
+
 rFoldl :: Foldable t => t a -> b -> (b -> a -> b) -> b
 rFoldl list def fun = foldl fun def list
+
+makeLeft :: a -> [Either a b]
+makeLeft r = [Left r]
 
 tfst :: (a, b, c) -> a
 tfst (x, _, _) = x
@@ -51,7 +58,7 @@ getTypeOfExpr ex gd = case ex of
   BoolLiteral {} -> Right Bool
   Array exs -> getTypeOfExpr (head exs) gd >>= \t -> Right $ ArrayOf t
   Nil -> Right NilType
-  Parser.Ast.Variable name -> do
+  VariableUsage name -> do
     def <- maybeToRight ("use of undefined variable '" <> name <> "'") (H.lookup name gd)
     case def of
       Analyser.Util.Variable _ expr -> getTypeOfExpr expr gd
@@ -62,7 +69,7 @@ getTypeOfExpr ex gd = case ex of
     def <- maybeToRight ("call to undefined function '" <> name <> "'") (H.lookup name gd)
     case def of
       Analyser.Util.Variable v _ -> case v of
-        Parser.Ast.Function args ret -> Right ret
+        Parser.Ast.Function args ret native -> Right ret
         x -> Left $ "Variable of type '" <> pack (show x) <> "' is not callable"
       Analyser.Util.Function vdt _ _ _ -> Right vdt
       Analyser.Util.Argument vdt -> undefined -- TODO

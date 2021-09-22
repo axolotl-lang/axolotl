@@ -46,7 +46,7 @@ nil :: Parser Expr
 nil = nilLit >> pure Nil
 
 variable :: Parser Expr
-variable = identifier >>= \x -> pure $ Variable x
+variable = identifier >>= \x -> pure $ VariableUsage x
 
 unary :: Parser Expr
 unary = single '-' >> try floatLiteral <|> intLiteral >>= \num -> pure $ Unary Neg num

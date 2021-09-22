@@ -18,6 +18,12 @@ executable axl
                     , Parser.Combinators
                     , Parser.Parser
                     , Analyser.Analyser
+                    , Analyser.Analysers.ArbitraryBlock
+                    , Analyser.Analysers.Array
+                    , Analyser.Analysers.Conditional
+                    , Analyser.Analysers.FunctionCall
+                    , Analyser.Analysers.FunctionDef
+                    , Analyser.Analysers.VariableDef
                     , Analyser.Util
                     , Evaluator.Evaluator
                     , Evaluator.NativeFns
@@ -31,6 +37,7 @@ executable axl
                     , megaparsec
                     , either
                     , text
+                    , mtl
     hs-source-dirs:   src
     default-extensions: OverloadedStrings
                       , LambdaCase

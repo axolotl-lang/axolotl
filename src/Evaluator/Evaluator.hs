@@ -15,7 +15,7 @@ evaluateExpression :: AU.GDefs -> AU.LDefs -> Expr -> IO Expr
 -- evaluate all items in root
 evaluateExpression gd ld (Root exprs) = mapM (evaluateExpression gd ld) exprs >>= \y -> pure $ last y
 -- replace with the value of the variable
-evaluateExpression gd ld (Variable x) = case fromJust (H.lookup x gd) of
+evaluateExpression gd ld (VariableUsage x) = case fromJust (H.lookup x gd) of
   AU.Variable _ expr -> case expr of
     IntLiteral n -> pure expr
     FloatLiteral y -> pure expr
