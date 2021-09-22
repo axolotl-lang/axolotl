@@ -24,7 +24,7 @@ import Parser.Ast
   )
 
 {-
-  semCheckExprs should be used to fold over a list of expressions,
+  analyseExprs should be used to fold over a list of expressions,
   with the final result being (globalDefs, localDefs, inferredTree)
 
   globalDefs here is a hashmap - (DefName, Expr), simple enough
@@ -40,10 +40,10 @@ import Parser.Ast
   inferredTree is the expr array you passed it with all Inferred
   in it's tree replaced with actual types inferred from context
 
-  semCheckExprs calls inferType for every expr in the expr array you give it
+  analyseExprs calls replaceInferredVdt for every expr in the expr array you give it
   initially, which in turn in most cases calls getTypeOfExpr
 
-  I use semCheckExprs for AST Root (just array of all expr in program)
+  I use analyseExprs for AST Root (just array of all expr in program)
   and function bodies here, but it can be used anywhere you want to
   infer types and analyse a set of expressions
 -}
@@ -85,17 +85,17 @@ checkArgs expArgs vdtArgs fnName = do
                   <> T.pack (show fnName)
         )
 
-semCheckExprs :: (Accumulator -> Expr -> Accumulator)
-semCheckExprs acc curr = do
+analyseExprs :: (Accumulator -> Expr -> Accumulator)
+analyseExprs acc curr = do
   let makeLeft r = (H.empty, H.empty, [Left r])
   if not (null (tthd acc)) && isLeft (last (tthd acc))
     then (H.empty, H.empty, [last (tthd acc)])
-    else case inferType curr (tfst acc) of
+    else case replaceInferredVdt curr (tfst acc) of
       Left err -> (tfst acc, tsnd acc, tthd acc <> [Left err])
       -- if it's a def, add to a1 or a2, else just add expr to a3
       Right infExpr -> case infExpr of
         Array exprs -> do
-          -- since inferType evaluated to Right, this exists
+          -- since replaceInferredVdt evaluated to Right, this exists
           let at = getTypeFromArr $ fromRight' $ getTypeOfExpr infExpr (tfst acc)
           let mapped = mapM (`getTypeOfExpr` tfst acc) exprs
           case mapped of
@@ -124,7 +124,7 @@ semCheckExprs acc curr = do
                               )
               maybe (tfst acc, tsnd acc, tthd acc <> [Right infExpr]) makeLeft (snd res)
         FunctionCall name args -> do
-          -- since inferType evaluated to Right, this exists
+          -- since replaceInferredVdt evaluated to Right, this exists
           let def = fromJust $ H.lookup name (tfst acc)
           -- (def arg-1 arg-2 ...)
           case def of
@@ -227,7 +227,7 @@ semCheckExprs acc curr = do
         ArbitraryBlock body -> do
           let result =
                 foldl
-                  semCheckExprs
+                  analyseExprs
                   (tfst acc, H.empty, [])
                   body
           let r = getTypeOfExpr (if null body then Nil else last body) (tfst result `union` tfst acc)
@@ -243,7 +243,7 @@ semCheckExprs acc curr = do
           Nothing -> do
             let result =
                   foldl
-                    semCheckExprs
+                    analyseExprs
                     (tfst acc `union` H.fromList ([(name, IncompleteFunction args)] <> map (second Argument) args), H.empty, [])
                     body
             let lx = if null body then Nil else last body
@@ -280,29 +280,29 @@ semCheckExprs acc curr = do
                   else res
         _ -> (tfst acc, tsnd acc, tthd acc <> [Right infExpr])
 
-inferType :: Expr -> GDefs -> Either Text Expr
-inferType (Root x) gd = error "fold with semCheckExprs for this"
+replaceInferredVdt :: Expr -> GDefs -> Either Text Expr
+replaceInferredVdt (Root x) gd = error "fold with analyseExprs for this"
 -- handle variable definition inside variable definition
-inferType (VariableDef name x VariableDef {}) _ =
+replaceInferredVdt (VariableDef name x VariableDef {}) _ =
   Left "Cannot define a variable inside a variable"
 -- infer types for proper variable definitions
-inferType (VariableDef name Inferred y) gd =
+replaceInferredVdt (VariableDef name Inferred y) gd =
   getTypeOfExpr y gd >>= \t -> Right $ VariableDef name t y
 -- infer function call types
-inferType (FunctionCall name args) gd =
+replaceInferredVdt (FunctionCall name args) gd =
   getTypeOfExpr (FunctionCall name args) gd >>= \t ->
     Right $ FunctionCall name args
 -- send back nodes that don't need type inference
-inferType x _ = Right x
+replaceInferredVdt x _ = Right x
 
 analyseAst :: Expr -> GDefs -> (Either Text Expr, GDefs, LDefs)
 analyseAst (Root x) gd = do
-  let t = foldl semCheckExprs (gd, H.empty, []) x
+  let t = foldl analyseExprs (gd, H.empty, []) x
   (sequence (tthd t) >>= \v -> Right (Root v), tfst t, tsnd t)
 analyseAst _ _ = undefined
 
 analyseAst' :: Expr -> Either Text Expr
 analyseAst' (Root x) = do
-  let t = foldl semCheckExprs (H.empty, H.empty, []) x
+  let t = foldl analyseExprs (H.empty, H.empty, []) x
   sequence (tthd t) >>= \v -> Right (Root v)
 analyseAst' _ = undefined
