@@ -1,7 +1,7 @@
 module Analyser.Util where
 
 import Data.Either.Combinators (maybeToLeft, maybeToRight)
-import Data.HashMap.Strict as H (HashMap, lookup)
+import Data.HashMap.Strict as H (HashMap, empty, lookup)
 import Data.Text as T (Text, pack)
 import Parser.Ast
   ( Expr (..),
@@ -21,8 +21,15 @@ type GDefs = HashMap Text Def
 
 type LDefs = HashMap Text GDefs
 
+type Env = (GDefs, LDefs)
+
+type AnalyserResult = [Either Text Expr]
+
 rFoldl :: Foldable t => t a -> b -> (b -> a -> b) -> b
 rFoldl list def fun = foldl fun def list
+
+makeLeft :: a -> [Either a b]
+makeLeft r = [Left r]
 
 tfst :: (a, b, c) -> a
 tfst (x, _, _) = x

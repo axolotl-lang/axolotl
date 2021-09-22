@@ -15,6 +15,24 @@ cradle:
     - path: "src/Analyser/Analyser.hs"
       component: "axolotl:exe:axl"
 
+    - path: "src/Analyser/Analysers/ArbitraryBlock.hs"
+      component: "axolotl:exe:axl"
+
+    - path: "src/Analyser/Analysers/Array.hs"
+      component: "axolotl:exe:axl"
+
+    - path: "src/Analyser/Analysers/Conditional.hs"
+      component: "axolotl:exe:axl"
+
+    - path: "src/Analyser/Analysers/FunctionCall.hs"
+      component: "axolotl:exe:axl"
+
+    - path: "src/Analyser/Analysers/FunctionDef.hs"
+      component: "axolotl:exe:axl"
+
+    - path: "src/Analyser/Analysers/VariableDef.hs"
+      component: "axolotl:exe:axl"
+
     - path: "src/Analyser/Util.hs"
       component: "axolotl:exe:axl"
 
@@ -22,4 +40,7 @@ cradle:
       component: "axolotl:exe:axl"
 
     - path: "src/Evaluator/NativeFns.hs"
+      component: "axolotl:exe:axl"
+
+    - path: "src/Paths_axolotl.hs"
       component: "axolotl:exe:axl"
