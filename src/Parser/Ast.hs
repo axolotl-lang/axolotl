@@ -25,14 +25,20 @@ data Expr
   | Array [Expr]
   | Nil -- only nil
   | VariableUsage Text -- like username
-  | VariableDef Text VDataType Expr -- like (def username 20)
+  | VariableDef {name :: Text, vtype :: VDataType, val :: Expr} -- like (def username 20)
   | Unary UnaryOp Expr -- only - (for now)
   -- like (defun (function-name: VDataType) (arg1: DataType, arg2: DataType) { ... })
   -- the bool is true if the function is a native function
-  | FunctionDef Text VDataType [(Text, VDataType)] [Expr] Bool
-  | FunctionCall Text [Expr] -- like (print "hello")
-  | AnonymousFunction VDataType [(Text, VDataType)] [Expr]
+  | FunctionDef
+      { name :: Text,
+        returnType :: VDataType,
+        expectedArgs :: [(Text, VDataType)],
+        body :: [Expr],
+        isNative :: Bool
+      }
+  | FunctionCall {name :: Text, actualArgs :: [Expr]} -- like (print "hello")
+  | AnonymousFunction {returnType :: VDataType, expectedArgs :: [(Text, VDataType)], body :: [Expr]}
   | ArbitraryBlock [Expr] -- a random block of exprs like { 2 }
-  | Conditional Expr Expr Expr -- (if cond iftrue iffalse)
+  | Conditional {cond :: Expr, ifTrue :: Expr, ifFalse :: Expr} -- (if cond iftrue iffalse)
   | Root [Expr] -- a set of all exprs in file
   deriving (Show, Eq)
