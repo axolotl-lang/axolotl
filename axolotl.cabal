@@ -1,7 +1,7 @@
 cabal-version:      2.4
 
 name:               axolotl
-version:            0.1.0.0
+version:            0.1.5.0
 synopsis:           a statically typed lisp-like programming language
 author:             Udit Karode <udit.karode@gmail.com>
 category:           Language
