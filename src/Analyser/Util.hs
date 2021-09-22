@@ -42,19 +42,19 @@ isFnCall name' expr = case expr of
   FunctionCall name args -> name == name'
   _ -> False
 
-getTypeFromExpr :: Expr -> GDefs -> Either Text VDataType
-getTypeFromExpr ex gd = case ex of
+getTypeOfExpr :: Expr -> GDefs -> Either Text VDataType
+getTypeOfExpr ex gd = case ex of
   IntLiteral {} -> Right Int
   FloatLiteral {} -> Right Float
   CharLiteral {} -> Right Int
   StrLiteral {} -> Right String
   BoolLiteral {} -> Right Bool
-  Array exs -> getTypeFromExpr (head exs) gd >>= \t -> Right $ ArrayOf t
+  Array exs -> getTypeOfExpr (head exs) gd >>= \t -> Right $ ArrayOf t
   Nil -> Right NilType
   Parser.Ast.Variable name -> do
     def <- maybeToRight ("use of undefined variable '" <> name <> "'") (H.lookup name gd)
     case def of
-      Analyser.Util.Variable _ expr -> getTypeFromExpr expr gd
+      Analyser.Util.Variable _ expr -> getTypeOfExpr expr gd
       Analyser.Util.Function _ args expr frgn -> undefined -- TODO
       Analyser.Util.Argument vdt -> Right vdt
       Analyser.Util.IncompleteFunction vdt -> undefined -- TODO
@@ -67,9 +67,9 @@ getTypeFromExpr ex gd = case ex of
       Analyser.Util.Function vdt _ _ _ -> Right vdt
       Analyser.Util.Argument vdt -> undefined -- TODO
       Analyser.Util.IncompleteFunction vdt -> Right Inferred
-  ArbitraryBlock exprs -> getTypeFromExpr (last exprs) gd
+  ArbitraryBlock exprs -> getTypeOfExpr (last exprs) gd
   -- semCheckExprs will bail out if type of ift /= type of iff
-  Conditional cond ift iff -> getTypeFromExpr ift gd
+  Conditional cond ift iff -> getTypeOfExpr ift gd
   VariableDef {} -> Right NilType
   FunctionDef {} -> Right NilType
   AnonymousFunction {} -> undefined -- TODO

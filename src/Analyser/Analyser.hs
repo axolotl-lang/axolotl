@@ -5,7 +5,7 @@ import Analyser.Util
     GDefs,
     LDefs,
     getTypeFromArr,
-    getTypeFromExpr,
+    getTypeOfExpr,
     isFnCall,
     rFoldl,
     tfst,
@@ -41,7 +41,7 @@ import Parser.Ast
   in it's tree replaced with actual types inferred from context
 
   semCheckExprs calls inferType for every expr in the expr array you give it
-  initially, which in turn in most cases calls getTypeFromExpr
+  initially, which in turn in most cases calls getTypeOfExpr
 
   I use semCheckExprs for AST Root (just array of all expr in program)
   and function bodies here, but it can be used anywhere you want to
@@ -62,7 +62,7 @@ type Accumulator = (GDefs, LDefs, [Either Text Expr])
   must have the same type as the first element in the array
 -}
 makeDtArr :: Accumulator -> [Expr] -> Either Text [VDataType]
-makeDtArr acc = mapM (`getTypeFromExpr` tfst acc)
+makeDtArr acc = mapM (`getTypeOfExpr` tfst acc)
 
 checkArgs :: [VDataType] -> Either Text [VDataType] -> Text -> Maybe Text
 checkArgs expArgs vdtArgs fnName = do
@@ -96,13 +96,13 @@ semCheckExprs acc curr = do
       Right infExpr -> case infExpr of
         Array exprs -> do
           -- since inferType evaluated to Right, this exists
-          let at = getTypeFromArr $ fromRight' $ getTypeFromExpr infExpr (tfst acc)
-          let mapped = mapM (`getTypeFromExpr` tfst acc) exprs
+          let at = getTypeFromArr $ fromRight' $ getTypeOfExpr infExpr (tfst acc)
+          let mapped = mapM (`getTypeOfExpr` tfst acc) exprs
           case mapped of
             Left txt -> makeLeft txt
             Right mvdts -> do
               let res = rFoldl exprs (0, Nothing) $ \acc' curr -> do
-                    let et = getTypeFromExpr curr (tfst acc)
+                    let et = getTypeOfExpr curr (tfst acc)
                     let ni = fst acc' + 1
                     if isJust (snd acc')
                       then (ni, snd acc')
@@ -191,7 +191,7 @@ semCheckExprs acc curr = do
                   )
             if vtype /= Inferred
               then do
-                let atype = getTypeFromExpr expr (tfst acc)
+                let atype = getTypeOfExpr expr (tfst acc)
                 case atype of
                   Left txt -> makeLeft txt
                   Right vdt ->
@@ -206,13 +206,13 @@ semCheckExprs acc curr = do
               else res
           Just _ -> (H.empty, H.empty, [Left $ "Redefinition of variable " <> name])
         Conditional cond ift iff -> do
-          case getTypeFromExpr cond (tfst acc) of
+          case getTypeOfExpr cond (tfst acc) of
             Left txt -> makeLeft txt
             Right vdt -> case vdt of
               Bool -> do
-                case getTypeFromExpr ift (tfst acc) of
+                case getTypeOfExpr ift (tfst acc) of
                   Left txt -> makeLeft txt
-                  Right t1 -> case getTypeFromExpr iff (tfst acc) of
+                  Right t1 -> case getTypeOfExpr iff (tfst acc) of
                     Left txt -> makeLeft txt
                     Right t2 -> do
                       if t1 == t2
@@ -230,7 +230,7 @@ semCheckExprs acc curr = do
                   semCheckExprs
                   (tfst acc, H.empty, [])
                   body
-          let r = getTypeFromExpr (if null body then Nil else last body) (tfst result `union` tfst acc)
+          let r = getTypeOfExpr (if null body then Nil else last body) (tfst result `union` tfst acc)
           ( tfst acc,
             tsnd acc,
             tthd acc
@@ -251,7 +251,7 @@ semCheckExprs acc curr = do
             let r =
                   if isFnCall name lx && inferred
                     then Left $ "cannot infer the return type of function '" <> name <> "' that returns a call to itself"
-                    else getTypeFromExpr lx (tfst result `union` tfst acc)
+                    else getTypeOfExpr lx (tfst result `union` tfst acc)
             case r of
               Left txt -> makeLeft txt
               Right dvdt -> do
@@ -287,10 +287,10 @@ inferType (VariableDef name x VariableDef {}) _ =
   Left "Cannot define a variable inside a variable"
 -- infer types for proper variable definitions
 inferType (VariableDef name Inferred y) gd =
-  getTypeFromExpr y gd >>= \t -> Right $ VariableDef name t y
+  getTypeOfExpr y gd >>= \t -> Right $ VariableDef name t y
 -- infer function call types
 inferType (FunctionCall name args) gd =
-  getTypeFromExpr (FunctionCall name args) gd >>= \t ->
+  getTypeOfExpr (FunctionCall name args) gd >>= \t ->
     Right $ FunctionCall name args
 -- send back nodes that don't need type inference
 inferType x _ = Right x
