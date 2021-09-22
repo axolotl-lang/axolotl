@@ -69,7 +69,7 @@ getTypeOfExpr ex gd = case ex of
     def <- maybeToRight ("call to undefined function '" <> name <> "'") (H.lookup name gd)
     case def of
       Analyser.Util.Variable v _ -> case v of
-        Parser.Ast.Function args ret -> Right ret
+        Parser.Ast.Function args ret native -> Right ret
         x -> Left $ "Variable of type '" <> pack (show x) <> "' is not callable"
       Analyser.Util.Function vdt _ _ _ -> Right vdt
       Analyser.Util.Argument vdt -> undefined -- TODO

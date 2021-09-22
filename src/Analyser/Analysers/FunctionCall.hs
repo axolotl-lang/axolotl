@@ -6,6 +6,7 @@ import Data.Either.Combinators
 import qualified Data.HashMap.Strict as H
 import Data.Maybe
 import qualified Data.Text as T
+import Debug.Trace (trace)
 import Parser.Ast
 
 makeDtArr :: Env -> [Expr] -> Either T.Text [VDataType]
@@ -38,11 +39,11 @@ analyseFunctionCall acc infExpr name args = do
   -- since replaceInferredVdt evaluated to Right, this exists
   let def = fromJust $ H.lookup name (fst env)
   -- (def arg-1 arg-2 ...)
-  case def of
+  case trace (show def) def of
     Analyser.Util.Variable v _ -> case v of
-      Parser.Ast.Function expArgs _ ->
+      Parser.Ast.Function expArgs _ native ->
         -- TODO: remove this equality hack when variable args are available
-        if (length expArgs /= length args) && (name /= "print") && (name /= "str")
+        if (length expArgs /= length args) && not native
           then
             pure $
               makeLeft $
@@ -57,9 +58,9 @@ analyseFunctionCall acc infExpr name args = do
             Nothing -> acc <> [Right infExpr]
             Just txt -> makeLeft txt
       x -> pure $ makeLeft $ "Variable of type '" <> T.pack (show x) <> "' is not callable"
-    Analyser.Util.Function vdt expArgs _ frgn ->
+    Analyser.Util.Function vdt expArgs _ native ->
       -- TODO: remove this equality hack when variable args are available
-      if (length expArgs /= length args) && (name /= "print") && (name /= "str")
+      if (length expArgs /= length args) && not native
         then
           pure $
             makeLeft $

@@ -11,7 +11,7 @@ data VDataType
   | Float
   | Bool
   | NilType
-  | Function [VDataType] VDataType
+  | Function [VDataType] VDataType Bool
   | ArrayOf VDataType
   | Inferred
   deriving (Show, Eq)

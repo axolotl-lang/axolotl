@@ -110,6 +110,6 @@ replaceInferredVdt x _ = Right x
 
 analyseAst :: Expr -> GDefs -> (Either Text Expr, GDefs, LDefs)
 analyseAst (Root x) gd = do
-  let t = runState (foldl analyseExprs (pure []) x) (H.empty, H.empty)
+  let t = runState (foldl analyseExprs (pure []) x) (gd, H.empty)
   (sequence (fst t) >>= \v -> Right (Root v), (fst . snd) t, (snd . snd) t)
 analyseAst _ _ = undefined
