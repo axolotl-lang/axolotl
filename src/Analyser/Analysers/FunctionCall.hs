@@ -39,7 +39,7 @@ analyseFunctionCall acc infExpr name args = do
   -- since replaceInferredVdt evaluated to Right, this exists
   let def = fromJust $ H.lookup name (fst env)
   -- (def arg-1 arg-2 ...)
-  case trace (show def) def of
+  case def of
     Analyser.Util.Variable v _ -> case v of
       Parser.Ast.Function expArgs _ native ->
         -- TODO: remove this equality hack when variable args are available
