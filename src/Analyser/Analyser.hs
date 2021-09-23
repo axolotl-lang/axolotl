@@ -25,6 +25,7 @@ import Control.Monad.State
 import Data.Bifunctor (first, second)
 import Data.Either.Combinators (fromLeft', fromRight, fromRight', isLeft, maybeToRight)
 import Data.HashMap.Strict as H (HashMap, delete, empty, findWithDefault, fromList, insert, lookup, union)
+import qualified Data.HashTable.IO as H
 import Data.Maybe (fromJust, fromMaybe, isJust)
 import Data.Text as T (Text, empty, pack, toLower, unpack)
 import Debug.Trace (trace)
@@ -75,36 +76,39 @@ analyseExprs :: (StateT Env IO AnalyserResult -> Expr -> StateT Env IO AnalyserR
 analyseExprs acc' curr = do
   env <- get
   acc <- acc'
-  if not (null acc) && isLeft (last acc)
-    then put (H.empty, H.empty) >> pure [last acc]
-    else case replaceInferredVdt curr (fst env) of
-      Left err -> pure $ acc <> [Left err]
-      Right infExpr -> case infExpr of
-        Array exprs -> analyseArray acc exprs infExpr
-        FunctionCall name args -> analyseFunctionCall acc infExpr name args
-        VariableDef name vtype expr -> analyseVariableDef acc infExpr name vtype expr
-        Conditional cond ift iff -> analyseConditional acc cond ift iff
-        ArbitraryBlock body -> analyseArbitraryBlock acc body analyseExprs
-        FunctionDef name vtype args body frgn -> analyseFunctionDef acc analyseExprs name vtype args body frgn
-        _ -> pure $ acc <> [Right infExpr]
+  v <- liftIO $ replaceInferredVdt curr (fst env)
+  case v of
+    Left err -> pure $ acc <> [Left err]
+    Right infExpr -> case infExpr of
+      Array exprs -> analyseArray acc exprs infExpr
+      FunctionCall name args -> analyseFunctionCall acc infExpr name args
+      VariableDef name vtype expr -> analyseVariableDef acc infExpr name vtype expr
+      Conditional cond ift iff -> analyseConditional acc cond ift iff
+      ArbitraryBlock body -> analyseArbitraryBlock acc body analyseExprs
+      FunctionDef name vtype args body frgn -> analyseFunctionDef acc analyseExprs name vtype args body frgn
+      _ -> pure $ acc <> [Right infExpr]
 
-replaceInferredVdt :: Expr -> GDefs -> Either Text Expr
+replaceInferredVdt :: Expr -> GDefs -> IO (Either Text Expr)
 replaceInferredVdt (Root x) gd = error "fold with analyseExprs for this"
 -- handle variable definition inside variable definition
 replaceInferredVdt (VariableDef name x VariableDef {}) _ =
-  Left "Cannot define a variable inside a variable"
+  pure $ Left "Cannot define a variable inside a variable"
 -- infer types for proper variable definitions
-replaceInferredVdt (VariableDef name Inferred y) gd =
-  getTypeOfExpr y gd >>= \t -> Right $ VariableDef name t y
+replaceInferredVdt (VariableDef name Inferred y) gd = do
+  t' <- getTypeOfExpr y gd
+  case t' of
+    Left txt -> pure $ Left txt
+    Right t -> pure $ Right $ VariableDef name t y
 -- infer function call types
 replaceInferredVdt (FunctionCall name args) gd =
   getTypeOfExpr (FunctionCall name args) gd >>= \t ->
-    Right $ FunctionCall name args
+    pure $ Right $ FunctionCall name args
 -- send back nodes that don't need type inference
-replaceInferredVdt x _ = Right x
+replaceInferredVdt x _ = pure $ Right x
 
 analyseAst :: Expr -> GDefs -> IO (Either Text Expr, GDefs, LDefs)
 analyseAst (Root x) gd = do
-  t <- runStateT (foldl analyseExprs (pure []) x) (gd, H.empty)
+  h <- H.newSized 5000
+  t <- runStateT (foldl analyseExprs (pure []) x) (gd, h)
   pure (sequence (fst t) >>= \v -> Right (Root v), (fst . snd) t, (snd . snd) t)
 analyseAst _ _ = undefined

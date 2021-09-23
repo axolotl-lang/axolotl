@@ -35,6 +35,7 @@ executable axl
                     , pretty-terminal
                     , pretty-simple
                     , megaparsec
+                    , hashtables
                     , either
                     , text
                     , mtl

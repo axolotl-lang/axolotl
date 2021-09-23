@@ -2,7 +2,9 @@ module Analyser.Util where
 
 import Data.Either.Combinators (maybeToLeft, maybeToRight)
 import Data.HashMap.Strict as H (HashMap, empty, lookup)
-import Data.Text as T (Text, pack)
+import Data.HashTable.IO as HT
+import qualified Data.HashTable.IO as H
+import Data.Text as T
 import Parser.Ast
   ( Expr (..),
     VDataType (ArrayOf, Bool, Float, Function, Inferred, Int, NilType, String),
@@ -17,16 +19,16 @@ data Def
     IncompleteFunction [(Text, VDataType)]
   deriving (Show, Eq)
 
-type GDefs = HashMap Text Def
+type GDefs = H.BasicHashTable Text Def
 
-type LDefs = HashMap Text GDefs
+type LDefs = H.BasicHashTable Text GDefs
 
 type Env = (GDefs, LDefs)
 
 type AnalyserResult = [Either Text Expr]
 
 rFoldl :: Foldable t => t a -> b -> (b -> a -> b) -> b
-rFoldl list def fun = foldl fun def list
+rFoldl list def fun = Prelude.foldl fun def list
 
 makeLeft :: a -> [Either a b]
 makeLeft r = [Left r]
@@ -49,39 +51,49 @@ isFnCall name' expr = case expr of
   FunctionCall name args -> name == name'
   _ -> False
 
-getTypeOfExpr :: Expr -> GDefs -> Either Text VDataType
+getTypeOfExpr :: Expr -> GDefs -> IO (Either Text VDataType)
 getTypeOfExpr ex gd = case ex of
-  IntLiteral {} -> Right Int
-  FloatLiteral {} -> Right Float
-  CharLiteral {} -> Right Int
-  StrLiteral {} -> Right String
-  BoolLiteral {} -> Right Bool
-  Array exs -> getTypeOfExpr (head exs) gd >>= \t -> Right $ ArrayOf t
-  Nil -> Right NilType
+  IntLiteral {} -> pure $ Right Int
+  FloatLiteral {} -> pure $ Right Float
+  CharLiteral {} -> pure $ Right Int
+  StrLiteral {} -> pure $ Right String
+  BoolLiteral {} -> pure $ Right Bool
+  Array exs -> do
+    t' <- getTypeOfExpr (Prelude.head exs) gd
+    case t' of
+      Left txt -> pure $ Left txt
+      Right vdt -> pure $ Right vdt
+  Nil -> pure $ Right NilType
   VariableUsage name -> do
-    def <- maybeToRight ("use of undefined variable '" <> name <> "'") (H.lookup name gd)
+    lu <- HT.lookup gd name
+    let def = maybeToRight ("use of undefined variable '" <> name <> "'") lu
     case def of
-      Analyser.Util.Variable _ expr -> getTypeOfExpr expr gd
-      Analyser.Util.Function _ args expr frgn -> undefined -- TODO
-      Analyser.Util.Argument vdt -> Right vdt
-      Analyser.Util.IncompleteFunction vdt -> undefined -- TODO
+      Left txt -> pure $ Left txt
+      Right def' -> case def' of
+        Analyser.Util.Variable _ expr -> getTypeOfExpr expr gd
+        Analyser.Util.Function _ args expr frgn -> undefined -- TODO
+        Analyser.Util.Argument vdt -> pure $ Right vdt
+        Analyser.Util.IncompleteFunction vdt -> undefined -- TODO
   FunctionCall name args -> do
-    def <- maybeToRight ("call to undefined function '" <> name <> "'") (H.lookup name gd)
+    lu <- HT.lookup gd name
+    let def = maybeToRight ("call to undefined function '" <> name <> "'") lu
     case def of
-      Analyser.Util.Variable v _ -> case v of
-        Parser.Ast.Function args ret native -> Right ret
-        x -> Left $ "Variable of type '" <> pack (show x) <> "' is not callable"
-      Analyser.Util.Function vdt _ _ _ -> Right vdt
-      Analyser.Util.Argument vdt -> undefined -- TODO
-      Analyser.Util.IncompleteFunction vdt -> Right Inferred
-  ArbitraryBlock exprs -> getTypeOfExpr (last exprs) gd
+      Left txt -> pure $ Left txt
+      Right def' -> case def' of
+        Analyser.Util.Variable v _ -> case v of
+          Parser.Ast.Function args ret native -> pure $ Right ret
+          x -> pure $ Left $ "Variable of type '" <> pack (show x) <> "' is not callable"
+        Analyser.Util.Function vdt _ _ _ -> pure $ Right vdt
+        Analyser.Util.Argument vdt -> undefined -- TODO
+        Analyser.Util.IncompleteFunction vdt -> pure $ Right Inferred
+  ArbitraryBlock exprs -> getTypeOfExpr (Prelude.last exprs) gd
   -- semCheckExprs will bail out if type of ift /= type of iff
   Conditional cond ift iff -> getTypeOfExpr ift gd
-  VariableDef {} -> Right NilType
-  FunctionDef {} -> Right NilType
+  VariableDef {} -> pure $ Right NilType
+  FunctionDef {} -> pure $ Right NilType
   AnonymousFunction {} -> undefined -- TODO
-  Root {} -> Left "Unexpected root"
+  Root {} -> pure $ Left "Unexpected root"
   Unary _ ex -> case ex of
-    IntLiteral n -> Right Int
-    FloatLiteral x -> Right Float
-    _ -> Left "Unary operator applied to unexpected expression"
+    IntLiteral n -> pure $ Right Int
+    FloatLiteral x -> pure $ Right Float
+    _ -> pure $ Left "Unary operator applied to unexpected expression"
