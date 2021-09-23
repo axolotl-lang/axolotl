@@ -1,13 +1,18 @@
 module Analyser.Analysers.FunctionCall where
 
 import Analyser.Util
-import Control.Monad.State
-import Data.Either.Combinators
+  ( AnalyserResult,
+    Def (Argument, Function, IncompleteFunction, Variable),
+    Env,
+    getTypeOfExpr,
+    makeLeft,
+    rFoldl,
+  )
+import Control.Monad.State (MonadState (get), State)
 import qualified Data.HashMap.Strict as H
-import Data.Maybe
+import Data.Maybe (fromJust)
 import qualified Data.Text as T
-import Debug.Trace (trace)
-import Parser.Ast
+import Parser.Ast (Expr, VDataType (Function))
 
 makeDtArr :: Env -> [Expr] -> Either T.Text [VDataType]
 makeDtArr acc = mapM (`getTypeOfExpr` fst acc)

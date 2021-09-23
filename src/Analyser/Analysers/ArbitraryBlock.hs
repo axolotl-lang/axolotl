@@ -1,12 +1,10 @@
 module Analyser.Analysers.ArbitraryBlock where
 
-import Analyser.Util
-import Control.Monad.State
-import Data.Either.Combinators
+import Analyser.Util (AnalyserResult, Env, getTypeOfExpr)
+import Control.Monad.State (MonadState (get), State, runState)
 import qualified Data.HashMap.Strict as H
-import Data.Maybe
 import qualified Data.Text as T
-import Parser.Ast
+import Parser.Ast (Expr (ArbitraryBlock, Nil))
 
 type AnalyseExprsFn = State Env AnalyserResult -> Expr -> State Env AnalyserResult
 

@@ -1,11 +1,14 @@
 module Analyser.Analysers.Conditional where
 
 import Analyser.Util
-import Control.Monad.State
-import Data.Either.Combinators
-import Data.Maybe
-import Data.Text as T
-import Parser.Ast
+  ( AnalyserResult,
+    Env,
+    getTypeOfExpr,
+    makeLeft,
+  )
+import Control.Monad.State (MonadState (get), State)
+import Data.Text as T (pack)
+import Parser.Ast (Expr (Conditional), VDataType (Bool))
 
 analyseConditional :: AnalyserResult -> Expr -> Expr -> Expr -> State Env AnalyserResult
 analyseConditional acc cond ift iff = do

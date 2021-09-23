@@ -1,13 +1,24 @@
 module Analyser.Analysers.FunctionDef where
 
 import Analyser.Util
+  ( AnalyserResult,
+    Def (Argument, Function, IncompleteFunction),
+    Env,
+    getTypeOfExpr,
+    isFnCall,
+    makeLeft,
+  )
 import Control.Monad.State
-import Data.Bifunctor
-import Data.Either.Combinators
+  ( MonadState (get),
+    State,
+    modify,
+    runState,
+  )
+import Data.Bifunctor (Bifunctor (first, second))
+import Data.Either.Combinators (fromRight')
 import qualified Data.HashMap.Strict as H
-import Data.Maybe
 import qualified Data.Text as T
-import Parser.Ast
+import Parser.Ast (Expr (FunctionDef, Nil), VDataType (Inferred))
 
 type AnalyseExprsFn = State Env AnalyserResult -> Expr -> State Env AnalyserResult
 
