@@ -7,13 +7,13 @@ import Analyser.Util
     getTypeOfExpr,
     makeLeft,
   )
-import Control.Monad.State (MonadState (get), State, modify)
+import Control.Monad.State (MonadState (get), StateT, modify)
 import Data.Bifunctor (Bifunctor (first))
 import qualified Data.HashMap.Strict as H
 import Data.Text as T (Text, pack)
 import Parser.Ast (Expr, VDataType (Inferred))
 
-analyseVariableDef :: AnalyserResult -> Expr -> Text -> VDataType -> Expr -> State Env AnalyserResult
+analyseVariableDef :: AnalyserResult -> Expr -> Text -> VDataType -> Expr -> StateT Env IO AnalyserResult
 analyseVariableDef acc infExpr name vtype expr = do
   env <- get
   case H.lookup name (fst env) of

@@ -64,7 +64,7 @@ main' fileName = do
   case result of
     Left e -> putStrLn (errorBundlePretty e)
     Right res -> do
-      let out = analyseAst res (H.fromList defs)
+      out <- analyseAst res (H.fromList defs)
       case tfst out of
         Left txt -> logError $ Data.Text.unpack txt
         -- Right ex -> pPrint (tthd out) -- void $ evaluateExpression (tsnd out) (tthd out) ex

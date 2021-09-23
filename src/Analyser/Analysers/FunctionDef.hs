@@ -9,10 +9,10 @@ import Analyser.Util
     makeLeft,
   )
 import Control.Monad.State
-  ( MonadState (get),
-    State,
+  ( MonadIO (liftIO),
+    MonadState (get),
+    StateT (runStateT),
     modify,
-    runState,
   )
 import Data.Bifunctor (Bifunctor (first, second))
 import Data.Either.Combinators (fromRight')
@@ -20,7 +20,7 @@ import qualified Data.HashMap.Strict as H
 import qualified Data.Text as T
 import Parser.Ast (Expr (FunctionDef, Nil), VDataType (Inferred))
 
-type AnalyseExprsFn = State Env AnalyserResult -> Expr -> State Env AnalyserResult
+type AnalyseExprsFn = StateT Env IO AnalyserResult -> Expr -> StateT Env IO AnalyserResult
 
 analyseFunctionDef ::
   AnalyserResult ->
@@ -30,16 +30,17 @@ analyseFunctionDef ::
   [(T.Text, VDataType)] ->
   [Expr] ->
   Bool ->
-  State Env AnalyserResult
+  StateT Env IO AnalyserResult
 analyseFunctionDef acc analyseExprs name vtype args body frgn = do
   env <- get
   case H.lookup name (fst env) of
     Just _ -> pure $ makeLeft $ "Redefinition of function " <> name
     Nothing -> do
-      let result =
-            runState
-              (foldl analyseExprs (pure []) body)
-              (fst env `H.union` H.fromList ([(name, IncompleteFunction args)] <> map (second Argument) args), H.empty)
+      result <-
+        liftIO $
+          runStateT
+            (foldl analyseExprs (pure []) body)
+            (fst env `H.union` H.fromList ([(name, IncompleteFunction args)] <> map (second Argument) args), H.empty)
       let lx = if null body then Nil else last body
       let inferred = vtype == Inferred
       let r =

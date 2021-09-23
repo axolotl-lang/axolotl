@@ -1,11 +1,11 @@
 module Analyser.Analyser where
 
-import Analyser.Analysers.ArbitraryBlock
-import Analyser.Analysers.Array
-import Analyser.Analysers.Conditional
-import Analyser.Analysers.FunctionCall
-import Analyser.Analysers.FunctionDef
-import Analyser.Analysers.VariableDef
+import Analyser.Analysers.ArbitraryBlock (analyseArbitraryBlock)
+import Analyser.Analysers.Array (analyseArray)
+import Analyser.Analysers.Conditional (analyseConditional)
+import Analyser.Analysers.FunctionCall (analyseFunctionCall)
+import Analyser.Analysers.FunctionDef (analyseFunctionDef)
+import Analyser.Analysers.VariableDef (analyseVariableDef)
 import Analyser.Util
   ( AnalyserResult,
     Def (Argument, Function, IncompleteFunction, Variable),
@@ -22,11 +22,6 @@ import Analyser.Util
     tthd,
   )
 import Control.Monad.State
-  ( MonadState (get, put),
-    State,
-    modify,
-    runState,
-  )
 import Data.Bifunctor (first, second)
 import Data.Either.Combinators (fromLeft', fromRight, fromRight', isLeft, maybeToRight)
 import Data.HashMap.Strict as H (HashMap, delete, empty, findWithDefault, fromList, insert, lookup, union)
@@ -76,7 +71,7 @@ import Parser.Ast
   must have the same type as the first element in the array
 -}
 
-analyseExprs :: (State Env AnalyserResult -> Expr -> State Env AnalyserResult)
+analyseExprs :: (StateT Env IO AnalyserResult -> Expr -> StateT Env IO AnalyserResult)
 analyseExprs acc' curr = do
   env <- get
   acc <- acc'
@@ -108,8 +103,8 @@ replaceInferredVdt (FunctionCall name args) gd =
 -- send back nodes that don't need type inference
 replaceInferredVdt x _ = Right x
 
-analyseAst :: Expr -> GDefs -> (Either Text Expr, GDefs, LDefs)
+analyseAst :: Expr -> GDefs -> IO (Either Text Expr, GDefs, LDefs)
 analyseAst (Root x) gd = do
-  let t = runState (foldl analyseExprs (pure []) x) (gd, H.empty)
-  (sequence (fst t) >>= \v -> Right (Root v), (fst . snd) t, (snd . snd) t)
+  t <- runStateT (foldl analyseExprs (pure []) x) (gd, H.empty)
+  pure (sequence (fst t) >>= \v -> Right (Root v), (fst . snd) t, (snd . snd) t)
 analyseAst _ _ = undefined

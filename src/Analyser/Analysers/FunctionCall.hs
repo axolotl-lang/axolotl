@@ -8,7 +8,7 @@ import Analyser.Util
     makeLeft,
     rFoldl,
   )
-import Control.Monad.State (MonadState (get), State)
+import Control.Monad.State (MonadState (get), StateT)
 import qualified Data.HashMap.Strict as H
 import Data.Maybe (fromJust)
 import qualified Data.Text as T
@@ -38,7 +38,7 @@ checkArgs expArgs vdtArgs fnName = do
                   <> T.pack (show fnName)
         )
 
-analyseFunctionCall :: AnalyserResult -> Expr -> T.Text -> [Expr] -> State Env AnalyserResult
+analyseFunctionCall :: AnalyserResult -> Expr -> T.Text -> [Expr] -> StateT Env IO AnalyserResult
 analyseFunctionCall acc infExpr name args = do
   env <- get
   -- since replaceInferredVdt evaluated to Right, this exists

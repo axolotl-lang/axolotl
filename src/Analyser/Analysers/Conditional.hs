@@ -6,11 +6,11 @@ import Analyser.Util
     getTypeOfExpr,
     makeLeft,
   )
-import Control.Monad.State (MonadState (get), State)
+import Control.Monad.State (MonadState (get), StateT)
 import Data.Text as T (pack)
 import Parser.Ast (Expr (Conditional), VDataType (Bool))
 
-analyseConditional :: AnalyserResult -> Expr -> Expr -> Expr -> State Env AnalyserResult
+analyseConditional :: AnalyserResult -> Expr -> Expr -> Expr -> StateT Env IO AnalyserResult
 analyseConditional acc cond ift iff = do
   env <- get
   case getTypeOfExpr cond (fst env) of

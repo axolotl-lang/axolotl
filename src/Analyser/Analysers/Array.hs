@@ -8,13 +8,13 @@ import Analyser.Util
     makeLeft,
     rFoldl,
   )
-import Control.Monad.State (MonadState (get), State)
+import Control.Monad.State (MonadState (get), StateT)
 import Data.Either.Combinators (fromRight')
 import Data.Maybe (isJust)
 import Data.Text as T (pack, toLower)
 import Parser.Ast (Expr)
 
-analyseArray :: AnalyserResult -> [Expr] -> Expr -> State Env AnalyserResult
+analyseArray :: AnalyserResult -> [Expr] -> Expr -> StateT Env IO AnalyserResult
 analyseArray acc exprs infExpr = do
   env <- get
   -- since replaceInferredVdt evaluated to Right, this exists
