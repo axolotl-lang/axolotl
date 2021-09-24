@@ -104,7 +104,7 @@ replaceInferredVdt x _ = pure $ Right x
 
 analyseAst :: Expr -> GDefs -> IO (Either Text Expr, (GDefs, LDefs))
 analyseAst (Root x) gd = do
-  h <- H.newSized 5000
+  h <- H.newSized 1000
   t <- runStateT (foldl analyseExprs (pure []) x) (gd, h)
   pure (sequence (fst t) >>= \v -> Right (Root v), snd t)
 analyseAst _ _ = undefined

@@ -61,7 +61,7 @@ main' fileName = do
   case result of
     Left e -> putStrLn (errorBundlePretty e)
     Right res -> do
-      v <- H.fromListWithSizeHint 5000 defs
+      v <- H.fromListWithSizeHint 1000 defs
       out <- analyseAst res v
       case fst out of
         Left txt -> logError $ Data.Text.unpack txt

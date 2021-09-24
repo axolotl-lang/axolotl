@@ -39,7 +39,7 @@ analyseFunctionDef acc analyseExprs name vtype args body frgn = do
   case v of
     Just _ -> pure $ makeLeft $ "Redefinition of function " <> name
     Nothing -> do
-      h1 <- liftIO $ H.newSized 5000
+      h1 <- liftIO $ H.newSized 500
       let v = [(name, IncompleteFunction args)] <> map (second Argument) args
       v' <- liftIO $ hUnion' v (fst env)
       result <-

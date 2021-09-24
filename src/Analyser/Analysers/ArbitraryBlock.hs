@@ -15,8 +15,8 @@ type AnalyseExprsFn = StateT Env IO AnalyserResult -> Expr -> StateT Env IO Anal
 analyseArbitraryBlock :: AnalyserResult -> [Expr] -> AnalyseExprsFn -> StateT Env IO AnalyserResult
 analyseArbitraryBlock acc body analyseExprs = do
   env <- get
-  h1 <- liftIO $ H.newSized 5000
-  h2 <- liftIO $ H.newSized 5000
+  h1 <- liftIO $ H.newSized 1000
+  h2 <- liftIO $ H.newSized 1000
   let result = runStateT (foldl analyseExprs (pure []) body) (h1, h2)
   result <- liftIO result
   v <- liftIO $ (fst . snd) result `hUnion` fst env
