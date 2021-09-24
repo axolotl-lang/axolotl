@@ -38,6 +38,9 @@ getTypeFromArr y = error "getTypeFromArr is only for ArrayOf"
 hUnion :: H.BasicHashTable Text Def -> H.BasicHashTable Text Def -> IO (H.BasicHashTable Text Def)
 hUnion a b = H.mapM_ (uncurry (H.insert b)) a >> pure b
 
+hUnion' :: [(Text, Def)] -> H.BasicHashTable Text Def -> IO (H.BasicHashTable Text Def)
+hUnion' a b = mapM_ (uncurry (H.insert b)) a >> pure b
+
 isFnCall :: Text -> Expr -> Bool
 isFnCall name' expr = case expr of
   FunctionCall name args -> name == name'

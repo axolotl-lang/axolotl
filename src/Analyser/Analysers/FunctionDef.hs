@@ -6,6 +6,7 @@ import Analyser.Util
     Env,
     getTypeOfExpr,
     hUnion,
+    hUnion',
     isFnCall,
     makeLeft,
   )
@@ -39,8 +40,8 @@ analyseFunctionDef acc analyseExprs name vtype args body frgn = do
     Just _ -> pure $ makeLeft $ "Redefinition of function " <> name
     Nothing -> do
       h1 <- liftIO $ H.newSized 5000
-      v <- liftIO $ H.fromList ([(name, IncompleteFunction args)] <> map (second Argument) args)
-      v' <- liftIO $ fst env `hUnion` v
+      let v = [(name, IncompleteFunction args)] <> map (second Argument) args
+      v' <- liftIO $ hUnion' v (fst env)
       result <-
         liftIO $
           runStateT
@@ -58,8 +59,8 @@ analyseFunctionDef acc analyseExprs name vtype args body frgn = do
         Left txt -> pure $ makeLeft txt
         Right dvdt -> do
           let gdi = Analyser.Util.Function (if inferred then fromRight' r else vtype) args body frgn
-          v <- liftIO $ H.fromList [(name, gdi)]
-          v' <- liftIO $ v `hUnion` (fst . snd) result
+          let v = [(name, gdi)]
+          v' <- liftIO $ v `hUnion'` (fst . snd) result
           liftIO $ H.insert (fst env) name gdi
           liftIO $ H.insert (snd env) name v'
           let res =
