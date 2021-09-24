@@ -21,7 +21,6 @@ import Analyser.Util
 import Control.Monad.State
 import Data.Bifunctor (first, second)
 import Data.Either.Combinators (fromLeft', fromRight, fromRight', isLeft, maybeToRight)
-import Data.HashMap.Strict as H (HashMap, delete, empty, findWithDefault, fromList, insert, lookup, union)
 import qualified Data.HashTable.IO as H
 import Data.Maybe (fromJust, fromMaybe, isJust)
 import Data.Text as T (Text, empty, pack, toLower, unpack)

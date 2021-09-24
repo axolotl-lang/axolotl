@@ -17,7 +17,7 @@
   420
 })
 
-(def initial 37)
+(def initial-val 37)
 
-(print (arbitrary-function initial))
+(print (arbitrary-function initial-val))
 
