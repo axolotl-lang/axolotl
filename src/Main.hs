@@ -4,13 +4,10 @@ import Analyser.Analyser (analyseAst)
 import Analyser.Util as AU
   ( Def (Function),
     rFoldl,
-    tfst,
-    tsnd,
-    tthd,
   )
 import Control.Monad (void)
 import Data.Bifunctor (Bifunctor (second))
-import Data.HashMap.Strict as H (empty, fromList, union)
+import Data.HashTable.IO as H
 import Data.Text (Text, pack, unpack)
 import Data.Version (showVersion)
 import Evaluator.Evaluator (evaluateExpression)
@@ -64,11 +61,12 @@ main' fileName = do
   case result of
     Left e -> putStrLn (errorBundlePretty e)
     Right res -> do
-      out <- analyseAst res (H.fromList defs)
-      case tfst out of
+      v <- H.fromList defs
+      out <- analyseAst res v
+      case fst out of
         Left txt -> logError $ Data.Text.unpack txt
         -- Right ex -> pPrint (tthd out) -- void $ evaluateExpression (tsnd out) (tthd out) ex
-        Right ex -> void $ evaluateExpression (tsnd out) (tthd out) ex
+        Right ex -> void $ uncurry evaluateExpression (snd out) ex
 
 main :: IO ()
 main = do
