@@ -102,7 +102,7 @@ rword :: String -> Parser ()
 rword w = (lexeme . try) (string (pack w) *> notFollowedBy alphaNumChar)
 
 mathSymbol :: Parser Char
-mathSymbol = single '+' <|> single '-' <|> single '/' <|> single '%' <|> single '*'
+mathSymbol = single '+' <|> single '-' <|> single '/' <|> single '%' <|> single '*' <|> single '>'
 
 identifier :: Parser Text
 identifier = (lexeme . try) (p <&> pack)

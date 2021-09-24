@@ -13,7 +13,7 @@ import Parser.Ast
         StrLiteral,
         VariableDef
       ),
-    VDataType (Float, Int, NilType, String),
+    VDataType (Bool, Float, Int, NilType, String),
   )
 
 getNumber :: Expr -> Double
@@ -50,4 +50,10 @@ evalNative "/i" Int args = pure $ IntLiteral $ round (foldl1 (/) (map getNumber 
 evalNative "/f" Float args = pure $ FloatLiteral (foldl1 (/) (map getNumber args))
 evalNative "str" String args = pure $ StrLiteral (foldl1 (<>) (map getStr args))
 evalNative "print" NilType args = (putStrLn . T.unpack) (foldl1 (<>) (map getStr args)) >> pure Nil
-evalNative name _ _ = error $ "evaluator does not know how to execute the native function " <> T.unpack name
+evalNative ">" Bool exprs =
+  if length exprs == 2
+    then case (head exprs, exprs !! 1) of
+      (IntLiteral iv, IntLiteral iv') -> pure $ BoolLiteral (iv > iv')
+      _ -> undefined -- TODO
+    else error "can only equality check two arguments"
+evalNative name _ _ = error $ "evaluator does not know how to execute the native function '" <> T.unpack name <> "'"

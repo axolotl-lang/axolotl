@@ -11,7 +11,7 @@ import Data.HashTable.IO as H
 import Data.Text (Text, pack, unpack)
 import Data.Version (showVersion)
 import Evaluator.Evaluator (evaluateExpression)
-import Parser.Ast (VDataType (Float, Int, NilType, String))
+import Parser.Ast (VDataType (Bool, Float, Int, NilType, String))
 import Parser.Parser (exprs, root)
 import Paths_axolotl (version)
 import System.Console.Pretty
@@ -48,12 +48,7 @@ main' fileName = do
           ("*f", Float),
           ("/i", Int),
           ("/f", Float),
-          -- todo
-          ("<", Float),
-          ("<=", Float),
-          (">", Float),
-          (">=", Float),
-          -- todo
+          (">", Bool),
           ("print", NilType),
           ("str", String)
         ]
