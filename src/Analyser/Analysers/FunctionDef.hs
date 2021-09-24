@@ -40,14 +40,16 @@ analyseFunctionDef acc analyseExprs name vtype args body frgn = do
     Nothing -> do
       h1 <- liftIO $ H.newSized 5000
       v <- liftIO $ H.fromList ([(name, IncompleteFunction args)] <> map (second Argument) args)
+      v' <- liftIO $ fst env `hUnion` v
       result <-
         liftIO $
           runStateT
             (foldl analyseExprs (pure []) body)
-            (fst env `hUnion` v, h1)
+            (v', h1)
       let lx = if null body then Nil else last body
       let inferred = vtype == Inferred
-      v <- liftIO $ getTypeOfExpr lx ((fst . snd) result `hUnion` fst env)
+      v' <- liftIO $ (fst . snd) result `hUnion` fst env
+      v <- liftIO $ getTypeOfExpr lx v'
       let r =
             if isFnCall name lx && inferred
               then Left $ "cannot infer the return type of function '" <> name <> "' that returns a call to itself"
@@ -57,8 +59,9 @@ analyseFunctionDef acc analyseExprs name vtype args body frgn = do
         Right dvdt -> do
           let gdi = Analyser.Util.Function (if inferred then fromRight' r else vtype) args body frgn
           v <- liftIO $ H.fromList [(name, gdi)]
+          v' <- liftIO $ v `hUnion` (fst . snd) result
           liftIO $ H.insert (fst env) name gdi
-          liftIO $ H.insert (snd env) name (v `hUnion` (fst . snd) result)
+          liftIO $ H.insert (snd env) name v'
           let res =
                 acc
                   <> [ sequence (fst result) >>= \v ->

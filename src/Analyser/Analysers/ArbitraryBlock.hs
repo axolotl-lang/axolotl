@@ -19,5 +19,6 @@ analyseArbitraryBlock acc body analyseExprs = do
   h2 <- liftIO $ H.newSized 5000
   let result = runStateT (foldl analyseExprs (pure []) body) (h1, h2)
   result <- liftIO result
-  r <- liftIO $ getTypeOfExpr (if null body then Nil else last body) ((fst . snd) result `hUnion` fst env)
+  v <- liftIO $ (fst . snd) result `hUnion` fst env
+  r <- liftIO $ getTypeOfExpr (if null body then Nil else last body) v
   pure $ acc <> [sequence (fst result) >>= \v -> r >>= \t -> Right $ ArbitraryBlock v]

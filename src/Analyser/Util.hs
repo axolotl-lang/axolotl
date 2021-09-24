@@ -1,8 +1,6 @@
 module Analyser.Util where
 
 import Data.Either.Combinators (maybeToLeft, maybeToRight)
-import Data.HashMap.Strict as H (HashMap, empty, lookup)
-import Data.HashTable.IO as HT
 import qualified Data.HashTable.IO as H
 import Data.Text as T
 import Parser.Ast
@@ -37,8 +35,8 @@ getTypeFromArr :: VDataType -> VDataType
 getTypeFromArr (ArrayOf x) = x
 getTypeFromArr y = error "getTypeFromArr is only for ArrayOf"
 
-hUnion :: H.BasicHashTable k v -> H.BasicHashTable k v -> H.BasicHashTable k v
-hUnion = undefined
+hUnion :: H.BasicHashTable Text Def -> H.BasicHashTable Text Def -> IO (H.BasicHashTable Text Def)
+hUnion a b = H.mapM_ (uncurry (H.insert b)) a >> pure b
 
 isFnCall :: Text -> Expr -> Bool
 isFnCall name' expr = case expr of
@@ -59,7 +57,7 @@ getTypeOfExpr ex gd = case ex of
       Right vdt -> pure $ Right vdt
   Nil -> pure $ Right NilType
   VariableUsage name -> do
-    lu <- HT.lookup gd name
+    lu <- H.lookup gd name
     let def = maybeToRight ("use of undefined variable '" <> name <> "'") lu
     case def of
       Left txt -> pure $ Left txt
@@ -69,7 +67,7 @@ getTypeOfExpr ex gd = case ex of
         Analyser.Util.Argument vdt -> pure $ Right vdt
         Analyser.Util.IncompleteFunction vdt -> undefined -- TODO
   FunctionCall name args -> do
-    lu <- HT.lookup gd name
+    lu <- H.lookup gd name
     let def = maybeToRight ("call to undefined function '" <> name <> "'") lu
     case def of
       Left txt -> pure $ Left txt
