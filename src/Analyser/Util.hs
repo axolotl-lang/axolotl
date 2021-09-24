@@ -17,9 +17,9 @@ data Def
     IncompleteFunction [(Text, VDataType)] VDataType
   deriving (Show, Eq)
 
-type GDefs = H.CuckooHashTable Text Def
+type GDefs = H.BasicHashTable Text Def
 
-type LDefs = H.CuckooHashTable Text GDefs
+type LDefs = H.BasicHashTable Text GDefs
 
 type Env = (GDefs, LDefs)
 
@@ -35,10 +35,10 @@ getTypeFromArr :: VDataType -> VDataType
 getTypeFromArr (ArrayOf x) = x
 getTypeFromArr y = error "getTypeFromArr is only for ArrayOf"
 
-hUnion :: H.CuckooHashTable Text Def -> H.CuckooHashTable Text Def -> IO (H.CuckooHashTable Text Def)
+hUnion :: H.BasicHashTable Text Def -> H.BasicHashTable Text Def -> IO (H.BasicHashTable Text Def)
 hUnion a b = H.mapM_ (uncurry (H.insert b)) a >> pure b
 
-hUnion' :: [(Text, Def)] -> H.CuckooHashTable Text Def -> IO (H.CuckooHashTable Text Def)
+hUnion' :: [(Text, Def)] -> H.BasicHashTable Text Def -> IO (H.BasicHashTable Text Def)
 hUnion' a b = mapM_ (uncurry (H.insert b)) a >> pure b
 
 isFnCall :: Text -> Expr -> Bool
