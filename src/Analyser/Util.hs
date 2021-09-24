@@ -14,7 +14,7 @@ data Def
   | Argument VDataType
   | -- this is used to allow recursive calls
     -- and to check if they are proper
-    IncompleteFunction [(Text, VDataType)]
+    IncompleteFunction [(Text, VDataType)] VDataType
   deriving (Show, Eq)
 
 type GDefs = H.CuckooHashTable Text Def
@@ -68,7 +68,7 @@ getTypeOfExpr ex gd = case ex of
         Analyser.Util.Variable _ expr -> getTypeOfExpr expr gd
         Analyser.Util.Function _ args expr frgn -> undefined -- TODO
         Analyser.Util.Argument vdt -> pure $ Right vdt
-        Analyser.Util.IncompleteFunction vdt -> undefined -- TODO
+        Analyser.Util.IncompleteFunction args vdt -> undefined -- TODO
   FunctionCall name args -> do
     lu <- H.lookup gd name
     let def = maybeToRight ("call to undefined function '" <> name <> "'") lu
@@ -80,7 +80,7 @@ getTypeOfExpr ex gd = case ex of
           x -> pure $ Left $ "Variable of type '" <> pack (show x) <> "' is not callable"
         Analyser.Util.Function vdt _ _ _ -> pure $ Right vdt
         Analyser.Util.Argument vdt -> undefined -- TODO
-        Analyser.Util.IncompleteFunction vdt -> pure $ Right Inferred
+        Analyser.Util.IncompleteFunction args vdt -> pure $ Right vdt
   ArbitraryBlock exprs -> getTypeOfExpr (Prelude.last exprs) gd
   -- semCheckExprs will bail out if type of ift /= type of iff
   Conditional cond ift iff -> getTypeOfExpr ift gd

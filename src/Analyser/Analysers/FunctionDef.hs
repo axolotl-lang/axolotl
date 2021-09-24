@@ -20,6 +20,7 @@ import Data.Bifunctor (Bifunctor (first, second))
 import Data.Either.Combinators (fromRight')
 import qualified Data.HashTable.IO as H
 import qualified Data.Text as T
+import Debug.Trace (trace)
 import Parser.Ast (Expr (FunctionDef, Nil), VDataType (Inferred))
 
 type AnalyseExprsFn = StateT Env IO AnalyserResult -> Expr -> StateT Env IO AnalyserResult
@@ -40,7 +41,7 @@ analyseFunctionDef acc analyseExprs name vtype args body frgn = do
     Just _ -> pure $ makeLeft $ "Redefinition of function " <> name
     Nothing -> do
       h1 <- liftIO $ H.newSized 500
-      let v = [(name, IncompleteFunction args)] <> map (second Argument) args
+      let v = [(name, IncompleteFunction args vtype)] <> map (second Argument) args
       v' <- liftIO $ hUnion' v (fst env)
       result <-
         liftIO $

@@ -31,7 +31,7 @@ evaluateExpression gd ld (VariableUsage x) =
     -- argument values will be added as AU.Variable
     -- during the AnonymousFunction call
     AU.Argument _ -> error "should never happen"
-    AU.IncompleteFunction args -> undefined -- TODO
+    AU.IncompleteFunction args vtype -> undefined -- TODO
     -- replace with the result of application of unary operator
 evaluateExpression gd ld (Unary op expr) = case expr of
   -- right now there's only one unary operator
@@ -57,7 +57,7 @@ evaluateExpression gd ld (FunctionCall name argExprs) = do
       evArgs <- Prelude.mapM (evaluateExpression gd ld) argExprs
       evalNative name vdt evArgs
     AU.Argument vdt -> undefined -- TODO
-    AU.IncompleteFunction args -> undefined -- TODO
+    AU.IncompleteFunction args vtype -> undefined -- TODO
 evaluateExpression gd ld (Conditional cond ift iff) = do
   cond' <- evaluateExpression gd ld cond
   case cond' of

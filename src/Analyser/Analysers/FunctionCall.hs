@@ -87,7 +87,7 @@ analyseFunctionCall acc infExpr name args = do
             Nothing -> acc <> [Right infExpr]
             Just txt -> makeLeft txt
     Analyser.Util.Argument vdt -> undefined -- TODO
-    Analyser.Util.IncompleteFunction expArgs -> do
+    Analyser.Util.IncompleteFunction expArgs vtype -> do
       -- TODO: remove this equality hack when variable args are available
       if (length expArgs /= length args) && (name /= "print") && (name /= "str")
         then
