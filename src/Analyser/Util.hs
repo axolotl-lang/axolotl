@@ -33,15 +33,6 @@ rFoldl list def fun = Prelude.foldl fun def list
 makeLeft :: a -> [Either a b]
 makeLeft r = [Left r]
 
-tfst :: (a, b, c) -> a
-tfst (x, _, _) = x
-
-tsnd :: (a, b, c) -> b
-tsnd (_, y, _) = y
-
-tthd :: (a, b, c) -> c
-tthd (_, _, z) = z
-
 getTypeFromArr :: VDataType -> VDataType
 getTypeFromArr (ArrayOf x) = x
 getTypeFromArr y = error "getTypeFromArr is only for ArrayOf"
