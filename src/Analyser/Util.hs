@@ -37,6 +37,9 @@ getTypeFromArr :: VDataType -> VDataType
 getTypeFromArr (ArrayOf x) = x
 getTypeFromArr y = error "getTypeFromArr is only for ArrayOf"
 
+hUnion :: H.BasicHashTable k v -> H.BasicHashTable k v -> H.BasicHashTable k v
+hUnion = undefined
+
 isFnCall :: Text -> Expr -> Bool
 isFnCall name' expr = case expr of
   FunctionCall name args -> name == name'

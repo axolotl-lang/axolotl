@@ -5,6 +5,7 @@ import Analyser.Util
     Def (Argument, Function, IncompleteFunction),
     Env,
     getTypeOfExpr,
+    hUnion,
     isFnCall,
     makeLeft,
   )
@@ -16,7 +17,7 @@ import Control.Monad.State
   )
 import Data.Bifunctor (Bifunctor (first, second))
 import Data.Either.Combinators (fromRight')
-import qualified Data.HashMap.Strict as H
+import qualified Data.HashTable.IO as H
 import qualified Data.Text as T
 import Parser.Ast (Expr (FunctionDef, Nil), VDataType (Inferred))
 
@@ -33,26 +34,31 @@ analyseFunctionDef ::
   StateT Env IO AnalyserResult
 analyseFunctionDef acc analyseExprs name vtype args body frgn = do
   env <- get
-  case H.lookup name (fst env) of
+  v <- liftIO $ H.lookup (fst env) name
+  case v of
     Just _ -> pure $ makeLeft $ "Redefinition of function " <> name
     Nothing -> do
+      h1 <- liftIO $ H.newSized 5000
+      v <- liftIO $ H.fromList ([(name, IncompleteFunction args)] <> map (second Argument) args)
       result <-
         liftIO $
           runStateT
             (foldl analyseExprs (pure []) body)
-            (fst env `H.union` H.fromList ([(name, IncompleteFunction args)] <> map (second Argument) args), H.empty)
+            (fst env `hUnion` v, h1)
       let lx = if null body then Nil else last body
       let inferred = vtype == Inferred
+      v <- liftIO $ getTypeOfExpr lx ((fst . snd) result `hUnion` fst env)
       let r =
             if isFnCall name lx && inferred
               then Left $ "cannot infer the return type of function '" <> name <> "' that returns a call to itself"
-              else getTypeOfExpr lx ((fst . snd) result `H.union` fst env)
+              else v
       case r of
         Left txt -> pure $ makeLeft txt
         Right dvdt -> do
           let gdi = Analyser.Util.Function (if inferred then fromRight' r else vtype) args body frgn
-          modify $ first (H.insert name gdi)
-          modify $ second $ H.insert name (H.fromList [(name, gdi)] `H.union` (fst . snd) result)
+          v <- liftIO $ H.fromList [(name, gdi)]
+          liftIO $ H.insert (fst env) name gdi
+          liftIO $ H.insert (snd env) name (v `hUnion` (fst . snd) result)
           let res =
                 acc
                   <> [ sequence (fst result) >>= \v ->

@@ -17,9 +17,6 @@ import Analyser.Util
     isFnCall,
     makeLeft,
     rFoldl,
-    tfst,
-    tsnd,
-    tthd,
   )
 import Control.Monad.State
 import Data.Bifunctor (first, second)

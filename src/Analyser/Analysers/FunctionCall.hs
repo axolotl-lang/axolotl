@@ -8,14 +8,16 @@ import Analyser.Util
     makeLeft,
     rFoldl,
   )
-import Control.Monad.State (MonadState (get), StateT)
-import qualified Data.HashMap.Strict as H
+import Control.Monad.State (MonadIO (liftIO), MonadState (get), StateT)
+import qualified Data.HashTable.IO as H
 import Data.Maybe (fromJust)
 import qualified Data.Text as T
 import Parser.Ast (Expr, VDataType (Function))
 
-makeDtArr :: Env -> [Expr] -> Either T.Text [VDataType]
-makeDtArr acc = mapM (`getTypeOfExpr` fst acc)
+makeDtArr :: Env -> [Expr] -> IO (Either T.Text [VDataType])
+makeDtArr acc exprs = do
+  v <- mapM (`getTypeOfExpr` fst acc) exprs
+  pure $ sequence v
 
 checkArgs :: [VDataType] -> Either T.Text [VDataType] -> T.Text -> Maybe T.Text
 checkArgs expArgs vdtArgs fnName = do
@@ -41,8 +43,9 @@ checkArgs expArgs vdtArgs fnName = do
 analyseFunctionCall :: AnalyserResult -> Expr -> T.Text -> [Expr] -> StateT Env IO AnalyserResult
 analyseFunctionCall acc infExpr name args = do
   env <- get
+  v <- liftIO $ H.lookup (fst env) name
   -- since replaceInferredVdt evaluated to Right, this exists
-  let def = fromJust $ H.lookup name (fst env)
+  let def = fromJust v
   -- (def arg-1 arg-2 ...)
   case def of
     Analyser.Util.Variable v _ -> case v of
@@ -59,9 +62,11 @@ analyseFunctionCall acc infExpr name args = do
                   <> " in call to function '"
                   <> name
                   <> "'"
-          else pure case checkArgs expArgs (makeDtArr env args) name of
-            Nothing -> acc <> [Right infExpr]
-            Just txt -> makeLeft txt
+          else do
+            v <- liftIO $ makeDtArr env args
+            pure case checkArgs expArgs v name of
+              Nothing -> acc <> [Right infExpr]
+              Just txt -> makeLeft txt
       x -> pure $ makeLeft $ "Variable of type '" <> T.pack (show x) <> "' is not callable"
     Analyser.Util.Function vdt expArgs _ native ->
       -- TODO: remove this equality hack when variable args are available
@@ -76,9 +81,11 @@ analyseFunctionCall acc infExpr name args = do
                 <> " in call to function '"
                 <> name
                 <> "'"
-        else pure case checkArgs (map snd expArgs) (makeDtArr env args) name of
-          Nothing -> acc <> [Right infExpr]
-          Just txt -> makeLeft txt
+        else do
+          v <- liftIO $ makeDtArr env args
+          pure case checkArgs (map snd expArgs) v name of
+            Nothing -> acc <> [Right infExpr]
+            Just txt -> makeLeft txt
     Analyser.Util.Argument vdt -> undefined -- TODO
     Analyser.Util.IncompleteFunction expArgs -> do
       -- TODO: remove this equality hack when variable args are available
@@ -93,6 +100,8 @@ analyseFunctionCall acc infExpr name args = do
                 <> " in call to function '"
                 <> name
                 <> "'"
-        else pure case checkArgs (map snd expArgs) (makeDtArr env args) name of
-          Nothing -> acc <> [Right infExpr]
-          Just txt -> makeLeft txt
+        else do
+          v <- liftIO $ makeDtArr env args
+          pure case checkArgs (map snd expArgs) v name of
+            Nothing -> acc <> [Right infExpr]
+            Just txt -> makeLeft txt
