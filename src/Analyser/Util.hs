@@ -2,7 +2,7 @@ module Analyser.Util where
 
 import Data.Either.Combinators (maybeToLeft, maybeToRight)
 import qualified Data.HashTable.IO as H
-import Data.Text as T
+import Data.Text as T (Text, pack)
 import Parser.Ast
   ( Expr (..),
     VDataType (ArrayOf, Bool, Float, Function, Inferred, Int, NilType, String),

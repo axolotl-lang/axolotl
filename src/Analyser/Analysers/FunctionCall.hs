@@ -14,6 +14,10 @@ import Data.Maybe (fromJust)
 import qualified Data.Text as T
 import Parser.Ast (Expr, VDataType (Function))
 
+{-
+
+-}
+
 makeDtArr :: Env -> [Expr] -> IO (Either T.Text [VDataType])
 makeDtArr acc exprs = do
   v <- mapM (`getTypeOfExpr` fst acc) exprs
@@ -41,13 +45,14 @@ checkArgs expArgs vdtArgs fnName = do
         )
 
 analyseFunctionCall :: AnalyserResult -> Expr -> T.Text -> [Expr] -> StateT Env IO AnalyserResult
+-- acc     :: [Either Text Expr]  -> the resultant accumulator for analyseExprs
+-- infExpr :: Expr                -> the original function call Expr passed through replaceInferredVdt
+-- name    :: Text                -> the function that is being called
+-- args    :: [Expr]              -> the arguments passed to the function
 analyseFunctionCall acc infExpr name args = do
   env <- get
   v <- liftIO $ H.lookup (fst env) name
-  -- since replaceInferredVdt evaluated to Right, this exists
-  let def = fromJust v
-  -- (def arg-1 arg-2 ...)
-  case def of
+  case fromJust v of
     Analyser.Util.Variable v _ -> case v of
       Parser.Ast.Function expArgs _ native ->
         -- TODO: remove this equality hack when variable args are available

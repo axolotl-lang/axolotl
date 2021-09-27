@@ -15,40 +15,67 @@ import Data.Maybe (isJust)
 import Data.Text as T (Text, pack, toLower)
 import Parser.Ast (Expr)
 
+{-
+    In an Array, every element must conform to the VDataType
+    of the Array. This is all we have to check.
+-}
+
 analyseArray :: AnalyserResult -> [Expr] -> Expr -> StateT Env IO AnalyserResult
+-- acc   :: [Either Text Expr]  -> the resultant accumulator for analyseExprs
+-- exprs :: [Expr]              -> the list of Exprs that an array is formed by
+-- infExpr :: Expr              -> the original array Expr passed through replaceInferredVdt
 analyseArray acc exprs infExpr = do
   env <- get
   v <- liftIO $ getTypeOfExpr infExpr (fst env)
-  -- since replaceInferredVdt evaluated to Right, this exists
-  let at = getTypeFromArr $ fromRight' v
-  mapped <- liftIO $ mapM (`getTypeOfExpr` fst env) exprs
-  case sequence mapped of
-    Left txt -> pure $ makeLeft txt
-    Right mvdts -> do
-      let res = rFoldl exprs (pure (0, Nothing) :: IO (Int, Maybe Text)) $ \get'' curr -> do
-            et <- liftIO $ getTypeOfExpr curr (fst env)
-            get' <- get''
-            let ni = fst get' + 1
-            if isJust (snd get')
-              then pure (ni, snd get')
-              else case et of
-                Left txt -> pure (ni, Just txt)
-                Right avdt ->
-                  if avdt == at
-                    then pure (ni, Nothing)
-                    else
-                      pure
-                        ( ni,
-                          Just $
-                            "Expected type '"
-                              <> (toLower . T.pack . show) at
-                              <> "' but got '"
-                              <> (toLower . T.pack . show) avdt
-                              <> "' in index "
-                              <> T.pack (show (fst get'))
-                              <> " of array literal"
-                        )
-      res' <- liftIO res
-      case snd res' of
+  case v of
+    Left err -> pure $ makeLeft err
+    Right v -> do
+      -- this is the data type that every Expr in the array
+      -- should conform to.
+      let expVdt = getTypeFromArr v
+
+      -- create a new array with the (Either Text) VDataType of all exprs
+      exprTypes <- liftIO $ mapM (`getTypeOfExpr` fst env) exprs
+
+      -- rFoldl is just a foldl but with the function
+      -- coming later so I can use lambda properly.
+      --
+      -- We fold over exprTypes and return an error
+      -- when a type doesn't conform to the expected type
+      -- the accumulator is (currentIndex, Maybe (index, error))
+      let result = rFoldl exprTypes ((0, Nothing) :: (Int, Maybe Text)) $ \acc curr -> do
+            -- utility function to send back acc more easily
+            let ret x = (fst acc + 1, x)
+            -- see if getTypeOfExpr for this Expr succeeded
+            case curr of
+              -- if it succeeded, see if the type
+              -- is the same as the expected type
+              -- for this array
+              Right vdt ->
+                ret $
+                  if vdt == expVdt
+                    then -- if everything is okay, send back
+                    -- Nothing, denoting "no error"
+                      Nothing
+                    else -- if the type of the current Expr does
+                    -- not conform to the expected data type
+                    -- for this array, send back a descriptive
+                    -- error informing the user of the same
+
+                      Just $
+                        "Expected type "
+                          <> (toLower . T.pack . show) expVdt
+                          <> " but got "
+                          <> (toLower . T.pack . show) vdt
+                          <> " in index "
+                          <> T.pack (show (fst acc))
+                          <> " of array literal"
+              -- if getTypeOfExpr failed, just send back the error
+              Left err -> ret $ Just err
+      case snd result of
+        -- if everything is okay, just add infExpr to result
         Nothing -> pure $ acc <> [Right infExpr]
-        Just txt -> pure $ makeLeft txt
+        -- if we found an error, use makeLeft to send it back
+        -- makeLeft is a utility function that essentially just
+        -- creates errors
+        Just err -> pure $ makeLeft err

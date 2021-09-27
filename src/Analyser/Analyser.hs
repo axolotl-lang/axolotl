@@ -19,6 +19,10 @@ import Analyser.Util
     rFoldl,
   )
 import Control.Monad.State
+  ( MonadIO (liftIO),
+    MonadState (get),
+    StateT (runStateT),
+  )
 import Data.Bifunctor (first, second)
 import Data.Either.Combinators (fromLeft', fromRight, fromRight', isLeft, maybeToRight)
 import qualified Data.HashTable.IO as H
@@ -34,8 +38,8 @@ import Parser.Ast
   analyseExprs should be used to fold over a list of expressions,
   with the final result being (globalDefs, localDefs, inferredTree)
 
-  globalDefs here is a hashmap - (DefName, Expr), simple enough
-  localDefs is a hashmap - (scopeName, hashmap (DefName, Expr))
+  globalDefs here is a hashtable - (DefName, Expr), simple enough
+  localDefs is a hashtable - (scopeName, hashtable (DefName, Expr))
 
   so if you have two functions called a and b, and you defined a
   variable age=20 in a and name="udit" in b, you'll have localDefs as
@@ -45,43 +49,47 @@ import Parser.Ast
   ]
 
   inferredTree is the expr array you passed it with all Inferred
-  in it's tree replaced with actual types inferred from context
+  in it's tree replaced with actual types inferred from context.
 
-  analyseExprs calls replaceInferredVdt for every expr in the expr array you give it
-  initially, which in turn in most cases calls getTypeOfExpr
+  analyseExprs calls replaceInferredVdt for every expr in the
+  expr array you give it initially, which in turn calls
+  getTypeOfExpr in case of FunctionCall and VariableDef.
 
   I use analyseExprs for AST Root (just array of all expr in program)
   and function bodies here, but it can be used anywhere you want to
-  infer types and analyse a set of expressions
--}
-
-{-
-  Cases where a type-check is necessary:
-  * variable definition when the type is explicitly defined
-  * function definition when the return type is explicitly defined
-  * function call (whether all arguments confirm to needed types)
-  * array generation (whether all arguments confirm to needed type)
-
-  note that if the type of an array is explicitly defined, every
-  element in the array must have the same type, and in case the
-  type is _not_ explicitly defined, every element in the array
-  must have the same type as the first element in the array
+  infer types and analyse a set of expressions.
 -}
 
 analyseExprs :: (StateT Env IO AnalyserResult -> Expr -> StateT Env IO AnalyserResult)
 analyseExprs acc' curr = do
   env <- get
   acc <- acc'
+  -- infer types, replacing all Inferred in the AST with actual types
   v <- liftIO $ replaceInferredVdt curr (fst env)
   case v of
     Left err -> pure $ acc <> [Left err]
     Right infExpr -> case infExpr of
+      -- exprs :: [Expr]  -> the list of Exprs that an array is formed by
       Array exprs -> analyseArray acc exprs infExpr
+      -- name  :: Text    -> the function that is being called
+      -- args  :: [Expr]  -> the arguments passed to the function
       FunctionCall name args -> analyseFunctionCall acc infExpr name args
+      -- name  :: Text      -> the name of the variable
+      -- vtype :: VDataType -> data type of the variable
+      -- expr  :: Expr      -> value contained in the variable
       VariableDef name vtype expr -> analyseVariableDef acc infExpr name vtype expr
+      -- cond  :: Expr -> the condition to evaluate, must return bool
+      -- ift   :: Expr -> the Expr to return if cond is **true**
+      -- iff   :: Expr -> the Expr to return if cond is **false**
       Conditional cond ift iff -> analyseConditional acc cond ift iff
+      -- body  :: [Expr] -> the set of exprs that the block is formed by
       ArbitraryBlock body -> analyseArbitraryBlock acc body analyseExprs
-      FunctionDef name vtype args body frgn -> analyseFunctionDef acc analyseExprs name vtype args body frgn
+      -- name   :: Text                -> the name of the function
+      -- vtype  :: VDataType           -> data type of the return value of the function
+      -- args   :: [(Text, VDataType)] -> the arguments expected to be passed to the function
+      -- body   :: [Expr]              -> the Exprs that make up the function body; last expr is returned
+      -- native :: Bool                -> whether the function is a native function
+      FunctionDef name vtype args body native -> analyseFunctionDef acc analyseExprs name vtype args body native
       _ -> pure $ acc <> [Right infExpr]
 
 replaceInferredVdt :: Expr -> GDefs -> IO (Either Text Expr)

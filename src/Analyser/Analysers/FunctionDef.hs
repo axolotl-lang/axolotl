@@ -23,6 +23,9 @@ import qualified Data.Text as T
 import Debug.Trace (trace)
 import Parser.Ast (Expr (FunctionDef, Nil), VDataType (Inferred))
 
+-- type signature for the analyseExprs function
+-- this could have been imported, but cyclic imports aren't very good
+-- and it's just one value so I could very well pass it
 type AnalyseExprsFn = StateT Env IO AnalyserResult -> Expr -> StateT Env IO AnalyserResult
 
 analyseFunctionDef ::
@@ -34,7 +37,14 @@ analyseFunctionDef ::
   [Expr] ->
   Bool ->
   StateT Env IO AnalyserResult
-analyseFunctionDef acc analyseExprs name vtype args body frgn = do
+-- acc   :: [Either Text Expr]    -> the resultant accumulator for analyseExprs
+-- analyseExprs :: AnalyseExprsFn -> the analyseExprs function from Analyser.hs
+-- name   :: Text                 -> the name of the function
+-- vtype  :: VDataType            -> data type of the return value of the function
+-- args   :: [(Text, VDataType)]  -> the arguments expected to be passed to the function
+-- body   :: [Expr]               -> the Exprs that make up the function body; last expr is returned
+-- native :: Bool                 -> whether the function is a native function
+analyseFunctionDef acc analyseExprs name vtype args body native = do
   env <- get
   v <- liftIO $ H.lookup (fst env) name
   case v of
@@ -59,7 +69,7 @@ analyseFunctionDef acc analyseExprs name vtype args body frgn = do
       case r of
         Left txt -> pure $ makeLeft txt
         Right dvdt -> do
-          let gdi = Analyser.Util.Function (if inferred then fromRight' r else vtype) args body frgn
+          let gdi = Analyser.Util.Function (if inferred then fromRight' r else vtype) args body native
           let v = [(name, gdi)]
           v' <- liftIO $ v `hUnion'` (fst . snd) result
           liftIO $ H.insert (fst env) name gdi
@@ -68,7 +78,7 @@ analyseFunctionDef acc analyseExprs name vtype args body frgn = do
                 acc
                   <> [ sequence (fst result) >>= \v ->
                          r
-                           >>= \ct -> Right $ FunctionDef name ct args v frgn
+                           >>= \ct -> Right $ FunctionDef name ct args v native
                      ]
           if not inferred
             then
