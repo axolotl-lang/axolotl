@@ -1,4 +1,5 @@
 # axolotl-lang
+## NOTE: syntax likely to change soon
 🌊 a statically typed lisp-like programming language
 
 ```clojure
