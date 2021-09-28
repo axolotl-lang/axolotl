@@ -80,6 +80,7 @@ analyseFunctionDef acc analyseExprs name vtype args body native = do
     -- hashtable, we are good to go
     Nothing -> do
       h1 <- liftIO $ H.newSized 500
+      h2 <- liftIO $ H.newSized 500
 
       -- There are two extra things we need to be able to refer to compared
       -- to the definitions previously made (global definitions -- fst env)
@@ -100,16 +101,17 @@ analyseFunctionDef acc analyseExprs name vtype args body native = do
       -- To add these two, we use hUnion' that adds all elements of
       -- a Haskell list to a hashtable.
       let v = [(name, IncompleteFunction args vtype native)] <> map (second Argument) args
-      v' <- liftIO $ hUnion' v (fst env)
+      liftIO $ hUnion' v (fst env)
+
+      liftIO $ fst env `hUnion` h1
 
       -- We can now use analyseExprs to analyse all
       -- the Exprs in the function body.
-      -- TODO fix function scope defs leaking out.
       result <-
         liftIO $
           runStateT
             (foldl analyseExprs (pure []) body)
-            (v', h1)
+            (h1, h2)
 
       -- the Expr to be returned from the function
       let re = if null body then Nil else last body
@@ -119,8 +121,7 @@ analyseFunctionDef acc analyseExprs name vtype args body native = do
 
       -- we now add the definitions made inside of our function
       -- body to a hashtable v' and get the type of it in reType.
-      fdefs <- liftIO $ (fst . snd) result `hUnion` fst env
-      reType <- liftIO $ getTypeOfExpr re fdefs
+      reType <- liftIO $ getTypeOfExpr re h1
 
       -- if the last Expr in the function body is a call to
       -- itself (a recursive call), we have no way of knowing

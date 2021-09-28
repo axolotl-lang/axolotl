@@ -65,7 +65,7 @@ checkArgs expArgs actualArgs fnName = do
                 <> T.pack (show fnName)
       )
 
-functionExecutor ::
+functionAnalyser ::
   AnalyserResult ->
   Expr ->
   T.Text ->
@@ -73,7 +73,7 @@ functionExecutor ::
   [VDataType] ->
   Bool ->
   StateT Env IO AnalyserResult
-functionExecutor acc infExpr name args expArgs native = do
+functionAnalyser acc infExpr name args expArgs native = do
   env <- get
   -- TODO check arguments to native functions when
   -- variable arguments are available.
@@ -125,12 +125,12 @@ analyseFunctionCall acc infExpr name args = do
     --
     -- In case the user is trying to call a variable.
     Analyser.Util.Variable v _ -> case v of
-      Parser.Ast.Function expArgs _ native -> functionExecutor acc infExpr name args expArgs native
+      Parser.Ast.Function expArgs _ native -> functionAnalyser acc infExpr name args expArgs native
       x -> pure $ makeLeft $ "Variable of type '" <> T.pack (show x) <> "' is not callable"
     --
     -- In case the user is trying to call a Function.
     Analyser.Util.Function vdt expArgs _ native ->
-      functionExecutor acc infExpr name args (map snd expArgs) native
+      functionAnalyser acc infExpr name args (map snd expArgs) native
     --
     -- In case the user is trying to call an argument.
     Analyser.Util.Argument vdt -> {- TODO -} undefined
@@ -139,4 +139,4 @@ analyseFunctionCall acc infExpr name args = do
     -- This is not a problem, since this can happen during
     -- recursive calls.
     Analyser.Util.IncompleteFunction expArgs vtype native ->
-      functionExecutor acc infExpr name args (map snd expArgs) native
+      functionAnalyser acc infExpr name args (map snd expArgs) native
