@@ -20,7 +20,6 @@ import Data.Bifunctor (Bifunctor (first, second))
 import Data.Either.Combinators (fromRight')
 import qualified Data.HashTable.IO as H
 import qualified Data.Text as T
-import Debug.Trace (trace)
 import Parser.Ast (Expr (FunctionDef, Nil), VDataType (Inferred))
 
 {-
@@ -43,10 +42,6 @@ import Parser.Ast (Expr (FunctionDef, Nil), VDataType (Inferred))
       return type of the function.
 -}
 
--- type signature for the analyseExprs function
---
--- this could have been imported, but cyclic imports aren't very
--- good and it's just one value so I could very well pass it.
 type AnalyseExprsFn = StateT Env IO AnalyserResult -> Expr -> StateT Env IO AnalyserResult
 
 analyseFunctionDef ::
@@ -68,16 +63,12 @@ analyseFunctionDef ::
 analyseFunctionDef acc analyseExprs name vtype args body native = do
   env <- get
 
-  -- lookup the global definition hashtable
-  -- for an Expr with key as `name`.
+  -- lookup name in global defs (gd)
   v <- liftIO $ H.lookup (fst env) name
 
   case v of
-    -- if the key exists in the hashtable, send back an error
-    -- telling the user redefinitions are not allowed.
     Just _ -> pure $ makeLeft $ "Redefinition of function " <> name
-    -- if the key does not exist in the
-    -- hashtable, we are good to go
+    --
     Nothing -> do
       h1 <- liftIO $ H.newSized 500
       h2 <- liftIO $ H.newSized 500
@@ -105,8 +96,7 @@ analyseFunctionDef acc analyseExprs name vtype args body native = do
 
       liftIO $ fst env `hUnion` h1
 
-      -- We can now use analyseExprs to analyse all
-      -- the Exprs in the function body.
+      -- analyse body using analyseExprs
       result <-
         liftIO $
           runStateT
@@ -137,12 +127,8 @@ analyseFunctionDef acc analyseExprs name vtype args body native = do
               else reType
 
       case reType' of
-        -- If getTypeOfExpr failed on the last Expr
-        -- or if last Expr was a recursive call to
-        -- itself and no return type was specified,
-        -- send back the error.
         Left err -> pure $ makeLeft err
-        -- If everything went fine, we're good to go.
+        --
         Right dvdt -> do
           -- We can now add the Function as a Def to our global defs,
           -- overwriting the previous IncompleteFunction def.
@@ -150,8 +136,7 @@ analyseFunctionDef acc analyseExprs name vtype args body native = do
           liftIO $ H.insert (fst env) name fn
 
           -- We also need to add the definitions made inside this
-          -- function to the local defs (snd env). We use hUnion'
-          -- for this purpose using a single element list.
+          -- function to the local defs (snd env).
           v' <- liftIO $ [(name, fn)] `hUnion'` (fst . snd) result
           liftIO $ H.insert (snd env) name v'
 
@@ -162,28 +147,18 @@ analyseFunctionDef acc analyseExprs name vtype args body native = do
                   <> [ sequence (fst result) >>= \v ->
                          Right $ FunctionDef name dvdt args v native
                      ]
+
           -- check if the user explicitly defined a return type
           -- for this function, but returned a value of a different
-          -- type.
-          if not inferred
-            then
-              if vtype == dvdt
-                then -- if the explicitly defined type
-                -- is the type of the value being
-                -- returned, just send back res.
-                  pure res
-                else -- send back a descriptive error
-                -- if the return type is wrong
-
-                  pure $
-                    makeLeft $
-                      "Expected function '"
-                        <> name
-                        <> "' to return "
-                        <> (T.toLower . T.pack . show) vtype
-                        <> ", instead got "
-                        <> (T.toLower . T.pack . show) dvdt
-            else -- if the return type was not explicitly defined,
-            -- any type is fine since that is now the return
-            -- type of the function, so just return `res`.
-              pure res
+          -- type. doesn't matter if type not explicitly defined.
+          if inferred || (vtype == dvdt)
+            then pure res
+            else
+              pure $
+                makeLeft $
+                  "Expected function '"
+                    <> name
+                    <> "' to return "
+                    <> (T.toLower . T.pack . show) vtype
+                    <> ", instead got "
+                    <> (T.toLower . T.pack . show) dvdt

@@ -31,13 +31,9 @@ analyseConditional acc cond ift iff = do
   v <- liftIO $ getTypeOfExpr cond (fst env)
 
   case v of
-    -- if the type of the condition Expr
-    -- could not be determined, send back
-    -- the error received.
     Left txt -> pure $ makeLeft txt
     Right vdt -> do
-      -- if the type of the condition Expr
-      -- was determined, check if it is Bool
+      -- check if condition Expr is Bool
       case vdt of
         -- if the condition Expr returns Bool,
         -- we now need to check if both branches
@@ -45,30 +41,19 @@ analyseConditional acc cond ift iff = do
         Bool -> do
           vdtIft <- liftIO $ getTypeOfExpr ift (fst env)
           case vdtIft of
-            -- if the type of the if-true Expr
-            -- could not be determined, send back
-            -- the error received.
+            -- getTypeOfExpr on ift failed
             Left err -> pure $ makeLeft err
             Right t1 -> do
               vdtIff <- liftIO $ getTypeOfExpr iff (fst env)
               case vdtIff of
-                -- if the type of the if-false Expr
-                -- could not be determined, send back
-                -- the error received.
+                -- getTypeOfExpr on iff failed
                 Left err -> pure $ makeLeft err
                 Right t2 -> do
-                  -- if the types of both if-true and
-                  -- if-false Exprs were determined,
-                  -- see if they are the same.
+                  -- see if both branches return same type
                   if t1 == t2
-                    then -- if both branches return the same type,
-                    -- just add the entire conditional Expr
-                    -- to the result accumulator.
+                    then -- add to resultant accumulator
                       pure $ acc <> [Right $ Conditional cond ift iff]
-                    else -- if the branches don't return the same type, send
-                    -- back a descriptive error informing the user of
-                    -- the same.
-
+                    else
                       pure $
                         makeLeft $
                           "expected both conditional branches to return the same type, instead got "

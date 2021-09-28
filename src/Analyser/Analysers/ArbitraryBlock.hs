@@ -16,9 +16,6 @@ import Parser.Ast (Expr (ArbitraryBlock, Nil))
     we just run it thorugh analyseExprs.
 -}
 
--- type signature for the analyseExprs function
--- this could have been imported, but cyclic imports aren't very good
--- and it's just one value so I could very well pass it
 type AnalyseExprsFn = StateT Env IO AnalyserResult -> Expr -> StateT Env IO AnalyserResult
 
 analyseArbitraryBlock :: AnalyserResult -> [Expr] -> AnalyseExprsFn -> StateT Env IO AnalyserResult
@@ -39,5 +36,5 @@ analyseArbitraryBlock acc body analyseExprs = do
   let env' = snd result
   gd <- liftIO $ fst env' `hUnion` fst env
   r <- liftIO $ getTypeOfExpr (if null body then Nil else last body) gd
-  -- we bind r to include a Left value in getTypeOfExpr, if any
+
   pure $ acc <> [sequence (fst result) >>= \v -> r >> Right (ArbitraryBlock v)]

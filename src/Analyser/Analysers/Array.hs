@@ -55,14 +55,8 @@ analyseArray acc exprs infExpr = do
               Right vdt ->
                 ret $
                   if vdt == expVdt
-                    then -- if everything is okay, send back
-                    -- Nothing, denoting "no error"
-                      Nothing
-                    else -- if the type of the current Expr does
-                    -- not conform to the expected data type
-                    -- for this array, send back a descriptive
-                    -- error informing the user of the same.
-
+                    then Nothing
+                    else
                       Just $
                         "Expected type "
                           <> (toLower . T.pack . show) expVdt
@@ -71,10 +65,9 @@ analyseArray acc exprs infExpr = do
                           <> " in index "
                           <> T.pack (show (fst acc))
                           <> " of array literal"
-              -- if getTypeOfExpr failed, just send back the error
+              -- getTypeOfExpr failed, send back the error
               Left err -> ret $ Just err
       case snd result of
-        -- if everything is okay, just add infExpr to result
         Nothing -> pure $ acc <> [Right infExpr]
         -- if we found an error, use makeLeft to send it back
         -- makeLeft is a utility function that essentially just
