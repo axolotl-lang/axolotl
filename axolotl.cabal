@@ -1,22 +1,25 @@
-cabal-version:      2.4
+cabal-version:        2.4
 
-name:               axolotl
-version:            0.1.5.0
-synopsis:           a statically typed lisp-like programming language
-author:             Udit Karode <udit.karode@gmail.com>
-category:           Language
-bug-reports:        https://github.com/uditkarode/axolotl-lang/issues
-maintainer:         Udit Karode <udit.karode@gmail.com>
+name:                 axolotl
+version:              0.1.5.0
+synopsis:             a statically typed lisp-like programming language
+author:               Udit Karode <udit.karode@gmail.com>
+category:             Language
+bug-reports:          https://github.com/uditkarode/axolotl-lang/issues
+maintainer:           Udit Karode <udit.karode@gmail.com>
 
-license:        GPL-3.0-or-later
-license-file:   LICENSE
+license:              GPL-3.0-or-later
+license-file:         LICENSE
 
 executable axl
     main-is:          Main.hs
 
-    other-modules:    Parser.Ast
+    other-modules:    
+                   -- Parser 
+                      Parser.Ast
                     , Parser.Combinators
                     , Parser.Parser
+                   -- Analyser
                     , Analyser.Analyser
                     , Analyser.Analysers.ArbitraryBlock
                     , Analyser.Analysers.Array
@@ -25,8 +28,13 @@ executable axl
                     , Analyser.Analysers.FunctionDef
                     , Analyser.Analysers.VariableDef
                     , Analyser.Util
+                   -- Evaluator
                     , Evaluator.Evaluator
                     , Evaluator.NativeFns
+                    , Evaluator.Evaluators.FunctionCall
+                    , Evaluator.Evaluators.UnaryOp
+                    , Evaluator.Evaluators.VariableUsage
+                   -- Miscellaneous
                     , Paths_axolotl
 
     build-depends:    base ^>=4.15.0.0
@@ -39,8 +47,11 @@ executable axl
                     , clock
                     , text
                     , mtl
+
     hs-source-dirs:   src
+
     default-extensions: OverloadedStrings
                       , LambdaCase
                       , BlockArguments
+
     default-language: Haskell2010

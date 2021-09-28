@@ -42,5 +42,14 @@ cradle:
     - path: "src/Evaluator/NativeFns.hs"
       component: "axolotl:exe:axl"
 
+    - path: "src/Evaluator/Evaluators/FunctionCall.hs"
+      component: "axolotl:exe:axl"
+
+    - path: "src/Evaluator/Evaluators/UnaryOp.hs"
+      component: "axolotl:exe:axl"
+
+    - path: "src/Evaluator/Evaluators/VariableUsage.hs"
+      component: "axolotl:exe:axl"
+
     - path: "src/Paths_axolotl.hs"
       component: "axolotl:exe:axl"
