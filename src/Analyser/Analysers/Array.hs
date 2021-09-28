@@ -17,7 +17,8 @@ import Parser.Ast (Expr)
 
 {-
     In an Array, every element must conform to the VDataType
-    of the Array. This is all we have to check.
+    of the Array, and getTypeOfExpr must succeed for all the
+    Exprs in the Array.
 -}
 
 analyseArray :: AnalyserResult -> [Expr] -> Expr -> StateT Env IO AnalyserResult
@@ -34,7 +35,7 @@ analyseArray acc exprs infExpr = do
       -- should conform to.
       let expVdt = getTypeFromArr v
 
-      -- create a new array with the (Either Text) VDataType of all exprs
+      -- create a new array with the (Either Text) VDataType of all exprs.
       exprTypes <- liftIO $ mapM (`getTypeOfExpr` fst env) exprs
 
       -- rFoldl is just a foldl but with the function
@@ -42,7 +43,7 @@ analyseArray acc exprs infExpr = do
       --
       -- We fold over exprTypes and return an error
       -- when a type doesn't conform to the expected type
-      -- the accumulator is (currentIndex, Maybe (index, error))
+      -- the accumulator is (currentIndex, Maybe (index, error)).
       let result = rFoldl exprTypes ((0, Nothing) :: (Int, Maybe Text)) $ \acc curr -> do
             -- utility function to send back acc more easily
             let ret x = (fst acc + 1, x)
@@ -50,7 +51,7 @@ analyseArray acc exprs infExpr = do
             case curr of
               -- if it succeeded, see if the type
               -- is the same as the expected type
-              -- for this array
+              -- for this array.
               Right vdt ->
                 ret $
                   if vdt == expVdt
@@ -60,7 +61,7 @@ analyseArray acc exprs infExpr = do
                     else -- if the type of the current Expr does
                     -- not conform to the expected data type
                     -- for this array, send back a descriptive
-                    -- error informing the user of the same
+                    -- error informing the user of the same.
 
                       Just $
                         "Expected type "
@@ -77,5 +78,5 @@ analyseArray acc exprs infExpr = do
         Nothing -> pure $ acc <> [Right infExpr]
         -- if we found an error, use makeLeft to send it back
         -- makeLeft is a utility function that essentially just
-        -- creates errors
+        -- creates errors.
         Just err -> pure $ makeLeft err
