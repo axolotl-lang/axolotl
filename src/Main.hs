@@ -23,6 +23,8 @@ import System.Environment.Blank (getArgs)
 import System.IO (hPutStr, hPutStrLn, stderr, stdout)
 import Text.Megaparsec (errorBundlePretty, parse)
 import Text.Pretty.Simple (pPrint)
+import Transpiler.Backends.JS.JS (jsBackend)
+import Transpiler.Transpiler (transpile)
 
 makeNativeFunction :: VDataType -> Def
 makeNativeFunction ret = AU.Function ret [] [] True
@@ -32,8 +34,8 @@ logError toLog = do
   hPutStr stderr $ style Bold . color Red $ "[× fatal] "
   hPutStrLn stderr toLog
 
-main' :: String -> IO ()
-main' fileName = do
+main' :: String -> Bool -> IO ()
+main' fileName evaluate = do
   contents <- readFile fileName
   let result = parse root fileName (pack contents)
   -- temporary, just a hack for now
@@ -59,9 +61,12 @@ main' fileName = do
       v <- H.fromListWithSizeHint 1000 defs
       out <- analyseAst res v
       case fst out of
-        Left txt -> logError $ Data.Text.unpack txt
+        Left txt -> logError $ unpack txt
         -- Right ex -> pPrint (tthd out) -- void $ evaluateExpression (tsnd out) (tthd out) ex
-        Right ex -> void $ uncurry evaluateExpression (snd out) ex
+        Right ex ->
+          if evaluate
+            then void $ uncurry evaluateExpression (snd out) ex
+            else void $ putStrLn . unpack $ uncurry (transpile jsBackend ex) (snd out) 0
 
 main :: IO ()
 main = do
@@ -69,12 +74,12 @@ main = do
   case length args of
     0 -> putStrLn $ "usage: \n" <> "axl run program.axl"
     1 -> case head args of
-      "run" -> main' "index.axl"
-      "transpile" -> logError "transpilation is still wip"
+      "run" -> main' "index.axl" True
+      "transpile" -> main' "index.axl" False
       "version" -> putStrLn $ showVersion version
       _ -> logError $ "unknown action '" <> head args <> "'"
     2 -> case head args of
-      "run" -> main' $ last args
-      "transpile" -> logError "transpilation is still wip"
+      "run" -> main' (last args) True
+      "transpile" -> main' (last args) False
       _ -> logError $ "unknown action '" <> head args <> "'"
     _ -> logError $ "expected at most 2 arguments, got " <> show (length args)
