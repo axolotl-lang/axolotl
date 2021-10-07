@@ -9,55 +9,45 @@ import qualified Numeric as T
 import Parser.Ast
 import TextShow (TextShow (showt))
 
--- TODO remove gd, ld, and move out of IO
-
-pshowt :: (TextShow a) => a -> IO T.Text
-pshowt = pure . showt
-
 type IndentLevel = Int
 
-type Backend = Expr -> AU.GDefs -> AU.LDefs -> IndentLevel -> IO T.Text
+type Backend = Expr -> IndentLevel -> T.Text
 
 jsBackend :: Backend
-jsBackend e@(Root exprs) gd ld il = do
-  transpiled <- mapM (\x -> jsBackend x gd ld il) exprs
-  pure $ foldl (\acc curr -> acc <> "\n" <> AU.repeatText "\t" il <> curr) "" transpiled
+jsBackend e@(Root exprs) il = do
+  let transpiled = map (`jsBackend` il) exprs
+  foldl (\acc curr -> acc <> "\n" <> AU.repeatText "\t" il <> curr) "" transpiled
 
 -- Literals
-jsBackend e@(IntLiteral i) gd ld il = pshowt i
-jsBackend e@(FloatLiteral f) gd ld il = pshowt f
-jsBackend e@(CharLiteral c) gd ld il = pshowt c
-jsBackend e@(StrLiteral s) gd ld il = pshowt s
-jsBackend e@(BoolLiteral b) gd ld il = pshowt b
-jsBackend e@Nil gd ld il = do
-  pure "null"
+jsBackend e@(IntLiteral i) il = showt i
+jsBackend e@(FloatLiteral f) il = showt f
+jsBackend e@(CharLiteral c) il = showt c
+jsBackend e@(StrLiteral s) il = showt s
+jsBackend e@(BoolLiteral b) il = showt b
+jsBackend e@Nil il = do
+  "null"
 
 --
-jsBackend e@(Array arr) gd ld il = do
-  v <-
-    foldl
-      ( \acc curr -> do
-          tr <- jsBackend curr gd ld 0
-          acc <- acc
-          pure $ acc <> tr <> ", "
-      )
-      (pure "[" :: IO T.Text)
-      arr
-  pure $ v <> "]"
+jsBackend e@(Array arr) il = do
+  foldl
+    ( \acc curr ->
+        acc <> jsBackend curr 0 <> ", "
+    )
+    "["
+    arr
+    <> "]"
 
 --
-jsBackend e@(VariableUsage v) gd ld il = do
-  pshowt v
+jsBackend e@(VariableUsage v) il = do
+  showt v
 
 --
-jsBackend e@(VariableDef name _ val) gd ld il = do
-  val <- jsBackend val gd ld il
-  pure $ "const " <> name <> " = " <> val <> ";"
+jsBackend e@(VariableDef name _ val) il = do
+  "const " <> name <> " = " <> jsBackend val il <> ";"
 
 --
-jsBackend e@(Unary _ expr) gd ld il = do
-  expr <- jsBackend expr gd ld il
-  pure $ "-" <> expr
+jsBackend e@(Unary _ expr) il = do
+  "-" <> jsBackend expr il
 
 --
-jsBackend e@(FunctionDef name ret args body native) gd ld il = undefined
+jsBackend e@(FunctionDef name ret args body native) il = undefined
