@@ -28,6 +28,9 @@ type Env = (GDefs, LDefs)
 
 type AnalyserResult = [Either Text Expr]
 
+repeatText :: Text -> Int -> Text
+repeatText t n = foldl (<>) "" (map (const t) [1 .. n])
+
 -- foldl but with the function coming later
 -- this helps make the lambda more usable
 rFoldl :: Foldable t => t a -> b -> (b -> a -> b) -> b

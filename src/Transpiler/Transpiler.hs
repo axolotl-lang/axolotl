@@ -6,8 +6,8 @@ import Parser.Ast (Expr (Root))
 
 type IndentLevel = Int
 
-type Backend = Expr -> AU.GDefs -> AU.LDefs -> IndentLevel -> T.Text
+type Backend = Expr -> AU.GDefs -> AU.LDefs -> IndentLevel -> IO T.Text
 
-transpile :: Backend -> Expr -> AU.GDefs -> AU.LDefs -> IndentLevel -> T.Text
+transpile :: Backend -> Expr -> AU.GDefs -> AU.LDefs -> IndentLevel -> IO T.Text
 transpile b e@(Root exprs) gd ld il = b e gd ld il
 transpile _ _ _ _ _ = error "transpile: must receive Root"

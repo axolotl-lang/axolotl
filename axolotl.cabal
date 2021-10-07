@@ -46,6 +46,7 @@ executable axl
                     , pretty-simple
                     , megaparsec
                     , hashtables
+                    , text-show
                     , either
                     , clock
                     , text
