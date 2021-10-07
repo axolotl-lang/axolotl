@@ -50,4 +50,20 @@ jsBackend e@(Unary _ expr) il = do
   "-" <> jsBackend expr il
 
 --
-jsBackend e@(FunctionDef name ret args body native) il = undefined
+jsBackend e@(FunctionDef name _ args body native) il = do
+  let header = "function " <> name
+  let args' =
+        "("
+          <> snd
+            ( fromJust
+                ( T.uncons
+                    ( foldl
+                        (\acc curr -> acc <> ", " <> curr)
+                        " "
+                        (map fst args)
+                    )
+                )
+            )
+          <> ")"
+  let body' = " {" <> jsBackend (Root body) (il + 1) <> "\n}"
+  header <> args' <> body'

@@ -66,7 +66,7 @@ main' fileName evaluate = do
         Right ex ->
           if evaluate
             then void $ uncurry evaluateExpression (snd out) ex
-            else void $ pure $ transpile jsBackend ex 0
+            else putStrLn $ unpack $ transpile jsBackend ex 0
 
 main :: IO ()
 main = do
