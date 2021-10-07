@@ -2,12 +2,11 @@ module Transpiler.Backends.JS.JS where
 
 import Analyser.Util as AU
 import Data.Foldable (foldlM)
-import Data.HashTable.IO as H
 import Data.Maybe (fromJust)
 import qualified Data.Text as T
-import qualified Numeric as T
 import Parser.Ast
 import TextShow (TextShow (showt))
+import Transpiler.Util (makeCommaSep, repeatText)
 
 type IndentLevel = Int
 
@@ -16,7 +15,7 @@ type Backend = Expr -> IndentLevel -> T.Text
 jsBackend :: Backend
 jsBackend e@(Root exprs) il = do
   let transpiled = map (`jsBackend` il) exprs
-  foldl (\acc curr -> acc <> "\n" <> AU.repeatText "\t" il <> curr) "" transpiled
+  foldl (\acc curr -> acc <> "\n" <> repeatText "\t" il <> curr) "" transpiled
 
 -- Literals
 jsBackend e@(IntLiteral i) il = showt i
@@ -52,18 +51,28 @@ jsBackend e@(Unary _ expr) il = do
 --
 jsBackend e@(FunctionDef name _ args body native) il = do
   let header = "function " <> name
-  let args' =
-        "("
-          <> snd
-            ( fromJust
-                ( T.uncons
-                    ( foldl
-                        (\acc curr -> acc <> ", " <> curr)
-                        " "
-                        (map fst args)
-                    )
-                )
-            )
-          <> ")"
+  let args' = makeCommaSep "(" (map fst args) ")"
   let body' = " {" <> jsBackend (Root body) (il + 1) <> "\n}"
   header <> args' <> body'
+
+--
+jsBackend e@(FunctionCall name actualArgs) il = do
+  let args' = makeCommaSep "(" (map (`jsBackend` il) actualArgs) ")"
+  name <> args' <> ";"
+
+--
+jsBackend e@(AnonymousFunction _ args body) il = do
+  let args' = makeCommaSep "(" (map fst args) ") => "
+  let body' = " {" <> jsBackend (Root body) (il + 1) <> "\n}"
+  args' <> body'
+
+--
+jsBackend e@(ArbitraryBlock body) il = do
+  "{" <> jsBackend (Root body) (il + 1) <> "\n}"
+
+--
+jsBackend e@(Conditional cond ift iff) il = do
+  let cond' = jsBackend cond il
+  let ift' = jsBackend ift il
+  let iff' = jsBackend iff il
+  "if (" <> cond' <> ") {" <> ift' <> "} else {" <> iff' <> "}"

@@ -54,6 +54,9 @@ cradle:
     - path: "src/Transpiler/Transpiler.hs"
       component: "axolotl:exe:axl"
 
+    - path: "src/Transpiler/Util.hs"
+      component: "axolotl:exe:axl"
+
     - path: "src/Transpiler/Backends/JS/JS.hs"
       component: "axolotl:exe:axl"
 

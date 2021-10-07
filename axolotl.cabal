@@ -36,6 +36,7 @@ executable axl
                     , Evaluator.Evaluators.VariableUsage
                    -- Transpiler
                     , Transpiler.Transpiler
+                    , Transpiler.Util
                     , Transpiler.Backends.JS.JS
                    -- Miscellaneous
                     , Paths_axolotl
