@@ -38,7 +38,7 @@ returningRoot e@(Root exprs) il =
   do
     let ret = jsBackend (last exprs) il
     let transpiled = map (`jsBackend` il) (reverse (drop 1 (reverse exprs)))
-    let res = foldl (\acc curr -> acc <> "\n" <> repeatText tab il <> curr <> ";") "" transpiled
+    let res = foldl (\acc curr -> acc <> "\n" <> repeatText tab il <> curr) "" transpiled
     res <> "\n" <> repeatText tab il <> "return " <> ret <> ";"
 
 jsBackend :: Backend
@@ -64,7 +64,7 @@ jsBackend e@Nil il = do
 jsBackend e@(Array arr) il = do
   foldl
     ( \acc curr ->
-        acc <> jsBackend curr 0 <> ","
+        acc <> jsBackend curr 0 <> ", "
     )
     "["
     arr
@@ -72,11 +72,11 @@ jsBackend e@(Array arr) il = do
 
 --
 jsBackend e@(VariableUsage v) il = do
-  showt v
+  v
 
 --
 jsBackend e@(VariableDef name _ val) il = do
-  "const " <> name <> " = " <> jsBackend val il
+  "const " <> name <> " = " <> jsBackend val il <> ";"
 
 --
 jsBackend e@(Unary _ expr) il = do
@@ -102,7 +102,7 @@ jsBackend e@(AnonymousFunction _ args body) il = do
 
 --
 jsBackend e@(ArbitraryBlock body) il = do
-  "() => {" <> returningRoot (Root body) (il + 1) <> "\n}()"
+  "(() => {" <> returningRoot (Root body) (il + 1) <> "\n})()"
 
 --
 jsBackend e@(Conditional cond ift iff) il = do
