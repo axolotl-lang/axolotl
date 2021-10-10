@@ -1,3 +1,5 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module Transpiler.Backends.JS.JS where
 
 import Data.Foldable (foldlM)
@@ -25,10 +27,15 @@ import Parser.Ast
   )
 import TextShow (TextShow (showt))
 import Transpiler.Util (makeCommaSep, repeatText)
+import qualified Data.Text.Encoding as B
+import Data.FileEmbed (embedFile)
 
 type IndentLevel = Int
 
 type Backend = Expr -> IndentLevel -> T.Text
+
+jsStdlib :: T.Text
+jsStdlib = B.decodeUtf8 $(embedFile "src/Transpiler/Backends/JS/stdlib.js")
 
 tab :: T.Text
 tab = repeatText " " 4
