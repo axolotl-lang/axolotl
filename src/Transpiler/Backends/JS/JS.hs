@@ -33,6 +33,21 @@ type Backend = Expr -> IndentLevel -> T.Text
 tab :: T.Text
 tab = repeatText " " 4
 
+sanitiseDefinition :: T.Text -> T.Text
+sanitiseDefinition = T.replace "-" "_"
+
+sanitiseFunctionCall :: T.Text -> T.Text
+sanitiseFunctionCall "+i" = "__plus__int"
+sanitiseFunctionCall "-i" = "__minus__int"
+sanitiseFunctionCall "+f" = "__plus__float"
+sanitiseFunctionCall "-f" = "__minus__float"
+sanitiseFunctionCall "*i" = "__multiply__int"
+sanitiseFunctionCall "*f" = "__multiply_float"
+sanitiseFunctionCall "/i" = "__divide__int"
+sanitiseFunctionCall "/f" = "__divide__float"
+sanitiseFunctionCall "print" = "console.log"
+sanitiseFunctionCall y = sanitiseDefinition y
+
 returningRoot :: Backend
 returningRoot e@(Root exprs) il =
   do
@@ -72,11 +87,11 @@ jsBackend e@(Array arr) il = do
 
 --
 jsBackend e@(VariableUsage v) il = do
-  showt v
+  sanitiseDefinition v
 
 --
 jsBackend e@(VariableDef name _ val) il = do
-  "const " <> name <> " = " <> jsBackend val il
+  "const " <> sanitiseDefinition name <> " = " <> jsBackend val il
 
 --
 jsBackend e@(Unary _ expr) il = do
@@ -84,7 +99,7 @@ jsBackend e@(Unary _ expr) il = do
 
 --
 jsBackend e@(FunctionDef name _ args body native) il = do
-  let header = "\nfunction " <> name
+  let header = "\nfunction " <> sanitiseDefinition name
   let args' = makeCommaSep "(" (map fst args) ")"
   let body' = " {" <> returningRoot (Root body) (il + 1) <> "\n}"
   header <> args' <> body'
@@ -92,7 +107,7 @@ jsBackend e@(FunctionDef name _ args body native) il = do
 --
 jsBackend e@(FunctionCall name actualArgs) il = do
   let args' = makeCommaSep "(" (map (`jsBackend` il) actualArgs) ")"
-  name <> args'
+  sanitiseFunctionCall name <> args'
 
 --
 jsBackend e@(AnonymousFunction _ args body) il = do
