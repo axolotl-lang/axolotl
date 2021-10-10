@@ -45,7 +45,8 @@ sanitiseFunctionCall "*i" = "__multiply__int"
 sanitiseFunctionCall "*f" = "__multiply__float"
 sanitiseFunctionCall "/i" = "__divide__int"
 sanitiseFunctionCall "/f" = "__divide__float"
-sanitiseFunctionCall "print" = "console.log"
+sanitiseFunctionCall "str" = "__str"
+sanitiseFunctionCall "print" = "__print"
 sanitiseFunctionCall y = sanitiseDefinition y
 
 returningRoot :: Backend
@@ -100,7 +101,7 @@ jsBackend e@(Unary _ expr) il = do
 --
 jsBackend e@(FunctionDef name _ args body native) il = do
   let header = "\nfunction " <> sanitiseDefinition name
-  let args' = makeCommaSep "(" (map fst args) ")"
+  let args' = makeCommaSep "(" (map (sanitiseDefinition . fst) args) ")"
   let body' = " {" <> returningRoot (Root body) (il + 1) <> "\n}"
   header <> args' <> body'
 

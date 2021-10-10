@@ -45,6 +45,7 @@ executable axl
                     , string-conversions
                     , pretty-terminal
                     , pretty-simple
+                    , file-embed
                     , megaparsec
                     , hashtables
                     , text-show

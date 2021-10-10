@@ -1,3 +1,5 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module Main where
 
 import Analyser.Analyser (analyseAst)
@@ -7,13 +9,15 @@ import Analyser.Util as AU
   )
 import Control.Monad (void)
 import Data.Bifunctor (Bifunctor (second))
-import Data.HashTable.IO as H
+import Data.HashTable.IO as H ( fromListWithSizeHint )
 import Data.Text (Text, pack, unpack)
 import Data.Version (showVersion)
+import qualified Data.Text as T
 import Evaluator.Evaluator (evaluateExpression)
 import Parser.Ast (VDataType (Bool, Float, Int, NilType, String))
 import Parser.Parser (exprs, root)
 import Paths_axolotl (version)
+import Data.FileEmbed (embedFile)
 import System.Console.Pretty
   ( Color (Red),
     Pretty (color, style),
@@ -25,9 +29,13 @@ import Text.Megaparsec (errorBundlePretty, parse)
 import Text.Pretty.Simple (pPrint)
 import Transpiler.Backends.JS.JS (jsBackend)
 import Transpiler.Transpiler (transpile)
+import qualified Data.Text.Encoding as B
 
 makeNativeFunction :: VDataType -> Def
 makeNativeFunction ret = AU.Function ret [] [] True
+
+jsStdlib :: T.Text
+jsStdlib = B.decodeUtf8 $(embedFile "stdlib.js")
 
 logError :: String -> IO ()
 logError toLog = do
@@ -66,7 +74,7 @@ main' fileName evaluate = do
         Right ex ->
           if evaluate
             then void $ uncurry evaluateExpression (snd out) ex
-            else putStrLn $ unpack $ transpile jsBackend ex 0
+            else putStrLn $ unpack $ jsStdlib <> transpile jsBackend ex 0
 
 main :: IO ()
 main = do
