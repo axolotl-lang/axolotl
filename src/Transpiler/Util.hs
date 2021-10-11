@@ -15,7 +15,7 @@ makeCommaSep header exprs footer =
           ("", undefined)
           ( T.unsnoc
               ( foldl
-                  (\acc curr -> acc <> curr <> ", ")
+                  (\acc curr -> acc <> curr <> ",")
                   ""
                   exprs
               )

@@ -64,7 +64,7 @@ jsBackend e@Nil il = do
 jsBackend e@(Array arr) il = do
   foldl
     ( \acc curr ->
-        acc <> jsBackend curr 0 <> ", "
+        acc <> jsBackend curr 0 <> ","
     )
     "["
     arr
