@@ -2,9 +2,11 @@
 
 module Transpiler.Backends.JS.JS where
 
+import Data.FileEmbed (embedFile)
 import Data.Foldable (foldlM)
 import Data.Maybe (fromJust)
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as B
 import Parser.Ast
   ( Expr
       ( AnonymousFunction,
@@ -27,8 +29,6 @@ import Parser.Ast
   )
 import TextShow (TextShow (showt))
 import Transpiler.Util (makeCommaSep, repeatText)
-import qualified Data.Text.Encoding as B
-import Data.FileEmbed (embedFile)
 
 type IndentLevel = Int
 
@@ -56,23 +56,35 @@ sanitiseFunctionCall "str" = "__str"
 sanitiseFunctionCall "print" = "__print"
 sanitiseFunctionCall y = sanitiseDefinition y
 
+needSemicolon :: Expr -> Bool
+needSemicolon (FunctionCall {}) = True
+needSemicolon (VariableDef {}) = True
+needSemicolon _ = False
+
 returningRoot :: Backend
 returningRoot e@(Root exprs) il =
   do
     let ret = jsBackend (last exprs) il
-    let transpiled = map (`jsBackend` il) (reverse (drop 1 (reverse exprs)))
-    let res = foldl (\acc curr -> acc <> "\n" <> repeatText tab il <> curr) "" transpiled
+    let t = reverse (drop 1 (reverse exprs))
+    let res =
+          foldl
+            ( \acc curr -> do
+                let res = acc <> "\n" <> repeatText tab il <> jsBackend curr il
+                if needSemicolon curr then res <> ";" else res
+            )
+            ""
+            t
     res <> "\n" <> repeatText tab il <> "return " <> ret <> ";"
 
 jsBackend :: Backend
 jsBackend e@(Root exprs) il = do
-  let transpiled = map (`jsBackend` il) exprs
   foldl
-    ( \acc curr ->
-        acc <> "\n" <> repeatText tab il <> curr <> ";"
+    ( \acc curr -> do
+        let res = acc <> "\n" <> repeatText tab il <> jsBackend curr il
+        if needSemicolon curr then res <> ";" else res
     )
     ""
-    transpiled
+    exprs
 
 -- Literals
 jsBackend e@(IntLiteral i) il = showt i
@@ -99,7 +111,7 @@ jsBackend e@(VariableUsage v) il = do
 
 --
 jsBackend e@(VariableDef name _ val) il = do
-  "const " <> sanitiseDefinition name <> " = " <> jsBackend val il <> ";"
+  "const " <> sanitiseDefinition name <> " = " <> jsBackend val il
 
 --
 jsBackend e@(Unary _ expr) il = do
