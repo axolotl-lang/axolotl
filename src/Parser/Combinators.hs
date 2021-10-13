@@ -107,7 +107,7 @@ mathSymbol = single '+' <|> single '-' <|> single '/' <|> single '%' <|> single 
 identifier :: Parser Text
 identifier = (lexeme . try) (p <&> pack)
   where
-    p = (:) <$> (letterChar <|> mathSymbol) <*> many (alphaNumChar <|> single '-' <|> single '?')
+    p = (:) <$> (letterChar <|> mathSymbol) <*> many (alphaNumChar <|> single '-' <|> single '?' <|> single '_')
 
 getTypeFromStr :: Text -> Parser VDataType
 getTypeFromStr "string" = pure String
