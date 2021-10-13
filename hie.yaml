@@ -60,5 +60,8 @@ cradle:
     - path: "src/Transpiler/Backends/JS/JS.hs"
       component: "axolotl:exe:axl"
 
+    - path: "src/Sugar/Sugar.hs"
+      component: "axolotl:exe:axl"
+
     - path: "src/Paths_axolotl.hs"
       component: "axolotl:exe:axl"

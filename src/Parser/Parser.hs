@@ -19,6 +19,7 @@ import Parser.Combinators
     squares,
     strLit,
   )
+import Sugar.Sugar (desugarExpr)
 import Text.Megaparsec (MonadParsec (observing, try), many, single, (<|>))
 import Text.Megaparsec.Char (numberChar)
 
@@ -100,7 +101,7 @@ arraySupportedExpr =
 
 expr :: Parser Expr
 expr =
-  try floatLiteral
+  desugarExpr <$> try floatLiteral
     <|> intLiteral
     <|> charLiteral
     <|> strLiteral
@@ -117,7 +118,7 @@ expr =
     <|> unary
 
 exprs :: Parser [Expr]
-exprs = many expr
+exprs = map desugarExpr <$> many expr
 
 root :: Parser Expr
 root = exprs >>= \x -> pure $ Root x

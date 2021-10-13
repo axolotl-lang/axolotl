@@ -38,6 +38,8 @@ executable axl
                     , Transpiler.Transpiler
                     , Transpiler.Util
                     , Transpiler.Backends.JS.JS
+                   -- Desugarer
+                    , Sugar.Sugar
                    -- Miscellaneous
                     , Paths_axolotl
 
