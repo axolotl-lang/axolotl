@@ -7,9 +7,10 @@ import Analyser.Util as AU
   )
 import Control.Monad (void)
 import Data.Bifunctor (Bifunctor (second))
-import Data.HashTable.IO as H
+import Data.HashTable.IO as H ( fromListWithSizeHint )
 import Data.Text (Text, pack, unpack)
 import Data.Version (showVersion)
+import qualified Data.Text as T
 import Evaluator.Evaluator (evaluateExpression)
 import Parser.Ast (VDataType (Bool, Float, Int, NilType, String))
 import Parser.Parser (exprs, root)
@@ -23,7 +24,7 @@ import System.Environment.Blank (getArgs)
 import System.IO (hPutStr, hPutStrLn, stderr, stdout)
 import Text.Megaparsec (errorBundlePretty, parse)
 import Text.Pretty.Simple (pPrint)
-import Transpiler.Backends.JS.JS (jsBackend)
+import Transpiler.Backends.JS.JS (jsBackend, jsStdlib)
 import Transpiler.Transpiler (transpile)
 
 makeNativeFunction :: VDataType -> Def
@@ -66,7 +67,7 @@ main' fileName evaluate = do
         Right ex ->
           if evaluate
             then void $ uncurry evaluateExpression (snd out) ex
-            else putStrLn $ unpack $ transpile jsBackend ex 0
+            else putStrLn $ unpack $ jsStdlib <> transpile jsBackend ex 0
 
 main :: IO ()
 main = do

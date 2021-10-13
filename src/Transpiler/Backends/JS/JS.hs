@@ -1,3 +1,5 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module Transpiler.Backends.JS.JS where
 
 import Data.Foldable (foldlM)
@@ -25,13 +27,34 @@ import Parser.Ast
   )
 import TextShow (TextShow (showt))
 import Transpiler.Util (makeCommaSep, repeatText)
+import qualified Data.Text.Encoding as B
+import Data.FileEmbed (embedFile)
 
 type IndentLevel = Int
 
 type Backend = Expr -> IndentLevel -> T.Text
 
+jsStdlib :: T.Text
+jsStdlib = B.decodeUtf8 $(embedFile "src/Transpiler/Backends/JS/stdlib.js")
+
 tab :: T.Text
 tab = repeatText " " 4
+
+sanitiseDefinition :: T.Text -> T.Text
+sanitiseDefinition = T.replace "-" "_"
+
+sanitiseFunctionCall :: T.Text -> T.Text
+sanitiseFunctionCall "+i" = "__plus__int"
+sanitiseFunctionCall "-i" = "__minus__int"
+sanitiseFunctionCall "+f" = "__plus__float"
+sanitiseFunctionCall "-f" = "__minus__float"
+sanitiseFunctionCall "*i" = "__multiply__int"
+sanitiseFunctionCall "*f" = "__multiply__float"
+sanitiseFunctionCall "/i" = "__divide__int"
+sanitiseFunctionCall "/f" = "__divide__float"
+sanitiseFunctionCall "str" = "__str"
+sanitiseFunctionCall "print" = "__print"
+sanitiseFunctionCall y = sanitiseDefinition y
 
 returningRoot :: Backend
 returningRoot e@(Root exprs) il =
@@ -72,11 +95,11 @@ jsBackend e@(Array arr) il = do
 
 --
 jsBackend e@(VariableUsage v) il = do
-  v
+  sanitiseDefinition v
 
 --
 jsBackend e@(VariableDef name _ val) il = do
-  "const " <> name <> " = " <> jsBackend val il <> ";"
+  "const " <> sanitiseDefinition name <> " = " <> jsBackend val il <> ";"
 
 --
 jsBackend e@(Unary _ expr) il = do
@@ -84,15 +107,15 @@ jsBackend e@(Unary _ expr) il = do
 
 --
 jsBackend e@(FunctionDef name _ args body native) il = do
-  let header = "\nfunction " <> name
-  let args' = makeCommaSep "(" (map fst args) ")"
+  let header = "\nfunction " <> sanitiseDefinition name
+  let args' = makeCommaSep "(" (map (sanitiseDefinition . fst) args) ")"
   let body' = " {" <> returningRoot (Root body) (il + 1) <> "\n}"
   header <> args' <> body'
 
 --
 jsBackend e@(FunctionCall name actualArgs) il = do
   let args' = makeCommaSep "(" (map (`jsBackend` il) actualArgs) ")"
-  name <> args'
+  sanitiseFunctionCall name <> args'
 
 --
 jsBackend e@(AnonymousFunction _ args body) il = do
