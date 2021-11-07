@@ -36,7 +36,7 @@ evaluateFunctionCall gd ld name evaluateExpression argExprs evalNative = do
       let unionArgs = zipWith (\d a -> (fst a, AU.Variable (snd a) d)) argExprs' args
 
       v' <- unionArgs `hUnion'` fromJust defs
-      evaluateExpression v' ld $ AnonymousFunction vdt args exprs
+      evaluateExpression v' ld $ AnonymousFunction vdt (args, False) exprs
 
     -- this is a native function
     AU.Function vdt _ _ True -> do

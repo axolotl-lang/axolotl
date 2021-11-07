@@ -1,7 +1,9 @@
 module Parser.Parser where
 
+import Analyser.Util (rFoldl)
 import Data.Either.Combinators (isRight)
-import Parser.Ast (Expr (..), UnaryOp (Neg))
+import qualified Data.Text as T
+import Parser.Ast (Expr (..), UnaryOp (Neg), VDataType)
 import Parser.Combinators
   ( Parser,
     boolLit,
@@ -65,8 +67,19 @@ nativeFunctionDef = parens func
     func = do
       rword "native defun"
       id <- identifierWithType
-      pure $ uncurry FunctionDef id [] [] True
+      pure $ uncurry FunctionDef (fst id) ([], False) [] True
 
+-- (defun some-fn [(arg1: int, arg2: int, ...)] { ... })
+-- can also have variadic arguments, for example arg3 in
+-- the below example will be an array of all the strings passed
+-- (defun some-fn [(arg1: int) (arg2: int) &(arg3: string)] {
+--    (print arg1)
+--    (print arg2)
+--    (print arg3)
+-- })
+-- (some-fn 1 2 "hi" "hello" "bye")
+-- prints: 1 2 ["hi", "hello", "bye"]
+-- a variadic argument must be the last in a function
 functionDef :: Parser Expr
 functionDef = parens func
   where
@@ -74,8 +87,20 @@ functionDef = parens func
       rword "defun"
       id <- optionallyTypedIdentifier
       args <- squares $ many identifierWithType
+      let len = length args
+      -- check if only the last element is variadic
+      let args' = rFoldl (zip [(1 :: Int) ..] args) ([], False) $ \acc curr ->
+            -- if current argument is variadic
+            if (snd . snd) curr
+              then -- check if it's the last element
+
+                if fst curr == len
+                  then (fst acc <> [(fst . snd) curr], True)
+                  else error "Only the last argument of a function can be variadic!"
+              else -- if not variadic, just add to accumulator
+                (fst acc <> [(fst . snd) curr], False)
       body <- braces exprs
-      pure $ uncurry FunctionDef id args body False
+      pure $ uncurry FunctionDef id args' body False
 
 arbitraryBlock :: Parser Expr
 arbitraryBlock = braces $ many expr >>= \x -> pure $ ArbitraryBlock x

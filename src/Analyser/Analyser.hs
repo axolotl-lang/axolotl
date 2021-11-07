@@ -83,12 +83,12 @@ analyseExprs acc' curr = do
       Conditional cond ift iff -> analyseConditional acc cond ift iff
       -- body  :: [Expr] -> the set of exprs that the block is formed by
       ArbitraryBlock body -> analyseArbitraryBlock acc body analyseExprs
-      -- name   :: Text                -> the name of the function
-      -- vtype  :: VDataType           -> data type of the return value of the function
-      -- args   :: [(Text, VDataType)] -> the arguments expected to be passed to the function
-      -- body   :: [Expr]              -> the Exprs that make up the function body; last expr is returned
-      -- native :: Bool                -> whether the function is a native function
-      FunctionDef name vtype args body native -> analyseFunctionDef acc analyseExprs name vtype args body native
+      -- name   :: Text                        -> the name of the function
+      -- vtype  :: VDataType                   -> data type of the return value of the function
+      -- args   :: ([(Text, VDataType)], Bool) -> the arguments expected to be passed to the function
+      -- body   :: [Expr]                      -> the Exprs that make up the function body; last expr is returned
+      -- native :: Bool                        -> whether the function is a native function
+      FunctionDef name vtype args body native -> analyseFunctionDef acc analyseExprs name vtype (fst args) body native
       _ -> pure $ acc <> [Right infExpr]
 
 replaceInferredVdt :: Expr -> GDefs -> IO (Either Text Expr)

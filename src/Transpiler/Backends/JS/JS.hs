@@ -120,7 +120,7 @@ jsBackend e@(Unary _ expr) il = do
 --
 jsBackend e@(FunctionDef name _ args body native) il = do
   let header = "\nfunction " <> sanitiseDefinition name
-  let args' = makeCommaSep "(" (map (sanitiseDefinition . fst) args) ")"
+  let args' = makeCommaSep "(" (map (sanitiseDefinition . fst) (fst args)) ")"
   let body' = " {" <> returningRoot (Root body) (il + 1) <> "\n}"
   header <> args' <> body'
 
@@ -131,7 +131,7 @@ jsBackend e@(FunctionCall name actualArgs) il = do
 
 --
 jsBackend e@(AnonymousFunction _ args body) il = do
-  let args' = makeCommaSep "(" (map fst args) ") => "
+  let args' = makeCommaSep "(" (map fst (fst args)) ") => "
   let body' = " {" <> returningRoot (Root body) (il + 1) <> "\n}"
   args' <> body'
 

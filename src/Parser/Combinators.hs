@@ -122,8 +122,11 @@ getTypeFromStr x =
     then getTypeFromStr (T.take (T.length x - 2) x) >>= \x -> pure (ArrayOf x)
     else fail "type does not exist"
 
-identifierWithType :: Parser (Text, VDataType)
-identifierWithType = parens iwt
+identifierWithType :: Parser ((Text, VDataType), Bool)
+identifierWithType = do
+  isVariadic <- isRight <$> observing (symbol "&")
+  args <- parens iwt
+  pure (args, isVariadic)
   where
     iwt = do
       id <- identifier
@@ -132,4 +135,6 @@ identifierWithType = parens iwt
       vtype >>= \x -> pure (id, x)
 
 optionallyTypedIdentifier :: Parser (Text, VDataType)
-optionallyTypedIdentifier = try identifierWithType <|> (identifier >>= \x -> pure (x, Inferred))
+optionallyTypedIdentifier =
+  try (fst <$> identifierWithType)
+    <|> (identifier >>= \x -> pure (x, Inferred))

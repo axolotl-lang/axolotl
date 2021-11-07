@@ -32,12 +32,14 @@ data Expr
   | FunctionDef
       { name :: Text,
         returnType :: VDataType,
-        expectedArgs :: [(Text, VDataType)],
+        -- the bool signifies whether the last argument
+        -- of the function is a variadic argument
+        expectedArgs :: ([(Text, VDataType)], Bool),
         body :: [Expr],
         isNative :: Bool
       }
   | FunctionCall {name :: Text, actualArgs :: [Expr]} -- like (print "hello")
-  | AnonymousFunction {returnType :: VDataType, expectedArgs :: [(Text, VDataType)], body :: [Expr]}
+  | AnonymousFunction {returnType :: VDataType, expectedArgs :: ([(Text, VDataType)], Bool), body :: [Expr]}
   | ArbitraryBlock [Expr] -- a random block of exprs like { 2 }
   | Conditional {cond :: Expr, ifTrue :: Expr, ifFalse :: Expr} -- (if cond iftrue iffalse)
   | Root [Expr] -- a set of all exprs in file

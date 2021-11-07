@@ -17,6 +17,16 @@
   420
 })
 
+// multiple arguments syntax
+(defun test-fn [things: int] {
+  (print things) // [1, 2, 3, ...]
+})
+
+// multiple arguments but with given arguments
+(defun yet-another-test-fn [(one-thing: int) (another-thing: string) &(more-things: string)] {
+    (print "hello")
+})
+
 (def initial-val 37)
 
 (print (arbitrary-function initial-val))

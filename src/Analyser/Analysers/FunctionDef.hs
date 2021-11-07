@@ -145,7 +145,7 @@ analyseFunctionDef acc analyseExprs name vtype args body native = do
           let res =
                 acc
                   <> [ sequence (fst result) >>= \v ->
-                         Right $ FunctionDef name dvdt args v native
+                         Right $ FunctionDef name dvdt (args, False) v native
                      ]
 
           -- check if the user explicitly defined a return type
