@@ -37,7 +37,7 @@ analyseVariableUsage gd ld evaluateExpression x =
       Nil -> pure expr
       FunctionCall _ args -> evaluateExpression gd ld expr
       _ -> evaluateExpression gd ld expr
-    AU.Function vdt args body native -> pure $ AnonymousFunction vdt (args, False) body
+    AU.Function vdt args body native -> pure $ AnonymousFunction vdt args body
     -- argument values will be added as AU.Variable
     -- during the AnonymousFunction call
     _ -> error "should never happen"

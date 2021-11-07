@@ -49,17 +49,17 @@ analyseFunctionDef ::
   AnalyseExprsFn ->
   T.Text ->
   VDataType ->
-  [(T.Text, VDataType)] ->
+  ([(T.Text, VDataType)], Bool) ->
   [Expr] ->
   Bool ->
   StateT Env IO AnalyserResult
 -- acc          :: [Either Text Expr]   -> the resultant accumulator for analyseExprs
--- analyseExprs :: AnalyseExprsFn       -> the analyseExprs function from Analyser.hs
--- name         :: Text                 -> the name of the function
--- vtype        :: VDataType            -> data type of the return value of the function
--- args         :: [(Text, VDataType)]  -> the arguments expected to be passed to the function
--- body         :: [Expr]               -> the Exprs that make up the function body; last expr is returned
--- native       :: Bool                 -> whether the function is a native function
+-- analyseExprs :: AnalyseExprsFn               -> the analyseExprs function from Analyser.hs
+-- name         :: Text                         -> the name of the function
+-- vtype        :: VDataType                    -> data type of the return value of the function
+-- args         :: ([(Text, VDataType)], Bool)  -> the arguments expected to be passed to the function
+-- body         :: [Expr]                       -> the Exprs that make up the function body; last expr is returned
+-- native       :: Bool                         -> whether the function is a native function
 analyseFunctionDef acc analyseExprs name vtype args body native = do
   env <- get
 
@@ -91,7 +91,7 @@ analyseFunctionDef acc analyseExprs name vtype args body native = do
       --
       -- To add these two, we use hUnion' that adds all elements of
       -- a Haskell list to a hashtable.
-      let v = [(name, IncompleteFunction args vtype native)] <> map (second Argument) args
+      let v = [(name, IncompleteFunction args vtype native)] <> map (second Argument) (fst args)
       liftIO $ hUnion' v (fst env)
 
       liftIO $ fst env `hUnion` h1
@@ -145,7 +145,7 @@ analyseFunctionDef acc analyseExprs name vtype args body native = do
           let res =
                 acc
                   <> [ sequence (fst result) >>= \v ->
-                         Right $ FunctionDef name dvdt (args, False) v native
+                         Right $ FunctionDef name dvdt args v native
                      ]
 
           -- check if the user explicitly defined a return type

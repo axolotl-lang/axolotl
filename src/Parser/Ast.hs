@@ -11,7 +11,7 @@ data VDataType
   | Float
   | Bool
   | NilType
-  | Function [VDataType] VDataType Bool
+  | Function {expArgs :: [VDataType], returns :: VDataType, native :: Bool, variadic :: Bool}
   | ArrayOf VDataType
   | Inferred
   deriving (Show, Eq)

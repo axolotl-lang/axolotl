@@ -68,8 +68,9 @@ functionAnalyser ::
   [Expr] ->
   [VDataType] ->
   Bool ->
+  Bool ->
   StateT Env IO AnalyserResult
-functionAnalyser acc infExpr name args expArgs native = do
+functionAnalyser acc infExpr name args expArgs isVariadic native = do
   env <- get
   -- TODO check arguments to native functions when
   -- variable arguments are available.
@@ -78,7 +79,7 @@ functionAnalyser acc infExpr name args expArgs native = do
   -- is the same as the number of expected arguments.
   -- For now, we skip this check on native functions
   -- since variable arguments have not been implemented.
-  if (length expArgs /= length args) && not native
+  if (if 1 == 1 then (/=) else (<=)) (length expArgs) (length args) && not native
     then
       pure $
         makeLeft $
@@ -119,12 +120,12 @@ analyseFunctionCall acc infExpr name args = do
     --
     -- In case the user is trying to call a variable.
     Analyser.Util.Variable v _ -> case v of
-      Parser.Ast.Function expArgs _ native -> functionAnalyser acc infExpr name args expArgs native
+      Parser.Ast.Function expArgs _ _ native -> functionAnalyser acc infExpr name args expArgs ((snd . fst) expArgs) native
       x -> pure $ makeLeft $ "Variable of type '" <> T.pack (show x) <> "' is not callable"
     --
     -- In case the user is trying to call a Function.
     Analyser.Util.Function vdt expArgs _ native ->
-      functionAnalyser acc infExpr name args (map snd expArgs) native
+      functionAnalyser acc infExpr name args (map snd (fst expArgs)) (snd expArgs) native
     --
     -- In case the user is trying to call an argument.
     Analyser.Util.Argument vdt -> {- TODO -} undefined
@@ -133,4 +134,4 @@ analyseFunctionCall acc infExpr name args = do
     -- This is not a problem, since this can happen during
     -- recursive calls.
     Analyser.Util.IncompleteFunction expArgs vtype native ->
-      functionAnalyser acc infExpr name args (map snd expArgs) native
+      functionAnalyser acc infExpr name args (map snd (fst expArgs)) (snd expArgs) native

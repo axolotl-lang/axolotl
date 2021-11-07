@@ -11,11 +11,11 @@ import Parser.Ast
 -- a Definition
 data Def
   = Variable VDataType Expr
-  | Function VDataType [(Text, VDataType)] [Expr] Bool
+  | Function VDataType ([(Text, VDataType)], Bool) [Expr] Bool
   | Argument VDataType
   | -- this is used to allow recursive calls
     -- and to check if they are proper
-    IncompleteFunction [(Text, VDataType)] VDataType Bool
+    IncompleteFunction ([(Text, VDataType)], Bool) VDataType Bool
   deriving (Show, Eq)
 
 -- global definitions - (text, Def)
@@ -93,7 +93,7 @@ getTypeOfExpr ex gd = case ex of
       Left txt -> pure $ Left txt
       Right def' -> case def' of
         Analyser.Util.Variable v _ -> case v of
-          Parser.Ast.Function args ret native -> pure $ Right ret
+          Parser.Ast.Function args ret variadic native -> pure $ Right ret
           x -> pure $ Left $ "Variable of type '" <> pack (show x) <> "' is not callable"
         Analyser.Util.Function vdt _ _ _ -> pure $ Right vdt
         Analyser.Util.Argument vdt -> undefined -- TODO
