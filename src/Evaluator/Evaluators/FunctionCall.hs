@@ -33,10 +33,10 @@ evaluateFunctionCall gd ld name evaluateExpression argExprs evalNative = do
     -- this is a function
     AU.Function vdt args exprs False -> do
       argExprs' <- mapM (evaluateExpression gd ld) argExprs
-      let unionArgs = zipWith (\d a -> (fst a, AU.Variable (snd a) d)) argExprs' args
+      let unionArgs = zipWith (\d a -> (fst a, AU.Variable (snd a) d)) argExprs' (fst args)
 
       v' <- unionArgs `hUnion'` fromJust defs
-      evaluateExpression v' ld $ AnonymousFunction vdt (args, False) exprs
+      evaluateExpression v' ld $ AnonymousFunction vdt args exprs
 
     -- this is a native function
     AU.Function vdt _ _ True -> do

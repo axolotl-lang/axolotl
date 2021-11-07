@@ -70,7 +70,7 @@ functionAnalyser ::
   Bool ->
   Bool ->
   StateT Env IO AnalyserResult
-functionAnalyser acc infExpr name args expArgs isVariadic native = do
+functionAnalyser acc infExpr name args expArgs variadic native = do
   env <- get
   -- TODO check arguments to native functions when
   -- variable arguments are available.
@@ -79,12 +79,16 @@ functionAnalyser acc infExpr name args expArgs isVariadic native = do
   -- is the same as the number of expected arguments.
   -- For now, we skip this check on native functions
   -- since variable arguments have not been implemented.
-  if (if 1 == 1 then (/=) else (<=)) (length expArgs) (length args) && not native
+  if (if variadic then (>) else (/=)) (length expArgs) (length args) && not native
     then
       pure $
         makeLeft $
           "expected "
             <> (T.pack . show) (length expArgs)
+            <> ( if variadic
+                   then " or more"
+                   else ""
+               )
             <> " arguments, got "
             <> (T.pack . show) (length args)
             <> " in call to function '"
@@ -120,7 +124,7 @@ analyseFunctionCall acc infExpr name args = do
     --
     -- In case the user is trying to call a variable.
     Analyser.Util.Variable v _ -> case v of
-      Parser.Ast.Function expArgs _ _ native -> functionAnalyser acc infExpr name args expArgs ((snd . fst) expArgs) native
+      Parser.Ast.Function expArgs _ native variadic -> functionAnalyser acc infExpr name args expArgs variadic native
       x -> pure $ makeLeft $ "Variable of type '" <> T.pack (show x) <> "' is not callable"
     --
     -- In case the user is trying to call a Function.

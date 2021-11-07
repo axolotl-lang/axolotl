@@ -7,10 +7,10 @@ import Analyser.Util as AU
   )
 import Control.Monad (void)
 import Data.Bifunctor (Bifunctor (second))
-import Data.HashTable.IO as H ( fromListWithSizeHint )
+import Data.HashTable.IO as H (fromListWithSizeHint)
 import Data.Text (Text, pack, unpack)
-import Data.Version (showVersion)
 import qualified Data.Text as T
+import Data.Version (showVersion)
 import Evaluator.Evaluator (evaluateExpression)
 import Parser.Ast (VDataType (Bool, Float, Int, NilType, String))
 import Parser.Parser (exprs, root)
@@ -28,7 +28,7 @@ import Transpiler.Backends.JS.JS (jsBackend, jsStdlib)
 import Transpiler.Transpiler (transpile)
 
 makeNativeFunction :: VDataType -> Def
-makeNativeFunction ret = AU.Function ret [] [] True
+makeNativeFunction ret = AU.Function ret ([], False) [] True
 
 logError :: String -> IO ()
 logError toLog = do
