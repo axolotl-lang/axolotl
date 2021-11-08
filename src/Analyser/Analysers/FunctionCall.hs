@@ -10,9 +10,12 @@ import Analyser.Util
   )
 import Control.Monad.State (MonadIO (liftIO), MonadState (get), StateT)
 import qualified Data.HashTable.IO as H
-import Data.Maybe (fromJust)
+import Data.Maybe (fromJust, isJust)
 import qualified Data.Text as T
+import Debug.Trace (trace)
+import GHC.List (foldl')
 import Parser.Ast (Expr, VDataType (Function))
+import TextShow (TextShow (showt))
 
 {-
     For a FunctionCall, the things we need to check for are:
@@ -33,10 +36,14 @@ makeVdtArr env exprs = do
   v <- mapM (`getTypeOfExpr` fst env) exprs
   pure $ sequence v
 
+rFoldl' list def fun = foldl' fun def list
+
 -- checkArgs takes a list of expected VDataTypes and a list of actual VDataTypes,
 -- and checks if the actual VDataType list is the same as the expected list.
-checkArgs :: [VDataType] -> [VDataType] -> T.Text -> Maybe T.Text
-checkArgs expArgs actualArgs fnName = do
+checkArgs :: [VDataType] -> [VDataType] -> T.Text -> Bool -> (Bool, Int) -> Maybe T.Text
+checkArgs expArgs actualArgs fnName variadic (recursiveCall, initialIndex) = do
+  let arglen = length expArgs
+  let argdiff = length actualArgs - length expArgs
   snd $
     -- rFoldl is just foldl but with the function coming later
     -- so I can use the lambda better.
@@ -45,20 +52,30 @@ checkArgs expArgs actualArgs fnName = do
     -- where the int is just used to keep track of the index,
     -- and the Maybe Text is actually an encountered error,
     -- which is Nothing if no error is found.
-    rFoldl (zip expArgs actualArgs) (0, Nothing) $ \acc curr ->
+    rFoldl' (zip expArgs actualArgs) (1, Nothing) $ \acc curr ->
       ( fst acc + 1,
-        if uncurry (==) curr
-          then Nothing
+        if isJust (snd acc)
+          then snd acc
           else
-            Just $
-              "Expected argument of type '"
-                <> (T.toLower . T.pack . show) (fst curr)
-                <> "' but got '"
-                <> (T.toLower . T.pack . show) (snd curr)
-                <> "' in argument "
-                <> T.pack (show (fst acc + 1))
-                <> T.pack " of call to function "
-                <> T.pack (show fnName)
+            if uncurry (==) curr
+              then
+                if fst acc == arglen && variadic && not recursiveCall
+                  then checkArgs (map (const (fst curr)) [1 .. argdiff]) (drop arglen actualArgs) fnName True (True, arglen)
+                  else Nothing
+              else
+                Just $
+                  "Expected argument of type '"
+                    <> (T.toLower . T.pack . show) (fst curr)
+                    <> "' but got '"
+                    <> (T.toLower . T.pack . show) (snd curr)
+                    <> "' in argument "
+                    <> showt (fst acc + (if recursiveCall then initialIndex else 0))
+                    <> " of call to "
+                    <> ( if variadic
+                           then "variadic function "
+                           else "function "
+                       )
+                    <> T.pack (show fnName)
       )
 
 functionAnalyser ::
@@ -101,7 +118,7 @@ functionAnalyser acc infExpr name args expArgs variadic native = do
       pure case vdtArr of
         Left err -> makeLeft err
         Right vdtArr' ->
-          case checkArgs expArgs vdtArr' name of
+          case checkArgs expArgs vdtArr' name variadic (False, 0) of
             Nothing -> acc <> [Right infExpr]
             Just txt -> makeLeft txt
 
