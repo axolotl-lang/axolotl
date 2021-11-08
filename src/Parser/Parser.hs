@@ -89,17 +89,21 @@ functionDef = parens func
       args <- squares $ many identifierWithType
       let len = length args
       -- check if only the last element is variadic
-      args' <- rFoldl (zip [(1 :: Int) ..] args) (pure ([], False) :: Parser ([(T.Text, VDataType)], Bool)) $ \acc curr -> do
-        acc <- acc
-        -- if current argument is variadic
-        if (snd . snd) curr
-          then -- check if it's the last element
+      args' <- rFoldl
+        (zip [(1 :: Int) ..] args)
+        (pure ([], False) :: Parser ([(T.Text, VDataType)], Bool))
+        $ \acc curr -> do
+          acc <- acc
+          let val = fst acc <> [(fst . snd) curr]
+          -- if current argument is variadic
+          if (snd . snd) curr
+            then -- check if it's the last element
 
-            if fst curr == len
-              then pure (fst acc <> [(fst . snd) curr], True)
-              else fail "Only the last argument of a function can be variadic!"
-          else -- if not variadic, just add to accumulator
-            pure (fst acc <> [(fst . snd) curr], False)
+              if fst curr == len
+                then pure (val, True)
+                else fail "Only the last argument of a function can be variadic!"
+            else -- if not variadic, just add to accumulator
+              pure (val, False)
       body <- braces exprs
       pure $ uncurry FunctionDef id args' body False
 

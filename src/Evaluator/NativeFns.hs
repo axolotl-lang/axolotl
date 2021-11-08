@@ -1,5 +1,6 @@
 module Evaluator.NativeFns where
 
+import Data.List (intersperse)
 import qualified Data.Text as T
 import Parser.Ast
   ( Expr
@@ -15,6 +16,7 @@ import Parser.Ast
       ),
     VDataType (Bool, Float, Int, NilType, String),
   )
+import TextShow (TextShow (showt))
 
 getNumber :: Expr -> Double
 getNumber e = case e of
@@ -23,17 +25,14 @@ getNumber e = case e of
   CharLiteral c -> fromIntegral c
   x -> error $ "cannot create a number from " <> show x
 
-tshow :: (Show a) => a -> T.Text
-tshow = T.pack . show
-
 getStr :: Expr -> T.Text
 getStr x = case x of
-  IntLiteral n -> tshow n
-  FloatLiteral y -> tshow y
-  CharLiteral n -> tshow [n]
+  IntLiteral n -> showt n
+  FloatLiteral y -> showt y
+  CharLiteral n -> showt [n]
   StrLiteral txt -> txt
-  BoolLiteral b -> tshow b
-  Array exs -> tshow exs
+  BoolLiteral b -> showt b
+  Array exs -> "[" <> foldl (<>) "" (intersperse "," (map showt exs)) <> "]"
   Nil -> "nil"
   VariableDef txt vdt ex -> "nil"
   FunctionDef txt vdt x1 exs b -> "nil"

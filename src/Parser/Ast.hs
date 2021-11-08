@@ -1,6 +1,7 @@
 module Parser.Ast where
 
 import Data.Text (Text)
+import TextShow (TextShow (showb, showt))
 
 data UnaryOp = Neg
   deriving (Show, Eq)
@@ -44,3 +45,10 @@ data Expr
   | Conditional {cond :: Expr, ifTrue :: Expr, ifFalse :: Expr} -- (if cond iftrue iffalse)
   | Root [Expr] -- a set of all exprs in file
   deriving (Show, Eq)
+
+instance TextShow Expr where
+  showb (IntLiteral i) = showb i
+  showb (FloatLiteral i) = showb i
+  showb (StrLiteral i) = showb i
+  showb (BoolLiteral i) = showb i
+  showb Nil = "nil"
