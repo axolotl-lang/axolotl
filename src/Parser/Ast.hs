@@ -14,6 +14,7 @@ data VDataType
   | NilType
   | Function {expArgs :: [VDataType], returns :: VDataType, native :: Bool, variadic :: Bool}
   | ArrayOf VDataType
+  | Any
   | Inferred
   deriving (Show, Eq)
 

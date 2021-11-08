@@ -12,7 +12,7 @@ import Data.Text (Text, pack, unpack)
 import qualified Data.Text as T
 import Data.Version (showVersion)
 import Evaluator.Evaluator (evaluateExpression)
-import Parser.Ast (VDataType (Bool, Float, Int, NilType, String))
+import Parser.Ast (VDataType (Bool, Float, Int, NilType, String, Any))
 import Parser.Parser (exprs, root)
 import Paths_axolotl (version)
 import System.Console.Pretty
@@ -28,7 +28,7 @@ import Transpiler.Backends.JS.JS (jsBackend, jsStdlib)
 import Transpiler.Transpiler (transpile)
 
 makeNativeFunction :: VDataType -> Def
-makeNativeFunction ret = AU.Function ret ([], False) [] True
+makeNativeFunction ret = AU.Function ret ([("args", Any)], True) [] True
 
 logError :: String -> IO ()
 logError toLog = do

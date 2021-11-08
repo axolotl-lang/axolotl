@@ -9,7 +9,7 @@ import Data.Text as T (Text, pack, unpack)
 import qualified Data.Text as T
 import Data.Void (Void)
 import Parser.Ast
-  ( VDataType (ArrayOf, Bool, Float, Inferred, Int, NilType, String),
+  ( VDataType (ArrayOf, Bool, Float, Inferred, Int, NilType, String, Any),
   )
 import Text.Megaparsec
   ( MonadParsec (notFollowedBy, observing, takeWhileP, try),
@@ -116,6 +116,7 @@ getTypeFromStr "float" = pure Float
 getTypeFromStr "bool" = pure Bool
 getTypeFromStr "nil" = pure NilType
 getTypeFromStr "inferred" = pure Inferred
+getTypeFromStr "any" = pure Any
 getTypeFromStr "function" = fail "not yet supported"
 getTypeFromStr x =
   if T.take 2 (T.reverse x) == "]["

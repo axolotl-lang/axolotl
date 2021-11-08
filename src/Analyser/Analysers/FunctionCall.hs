@@ -12,7 +12,7 @@ import Control.Monad.State (MonadIO (liftIO), MonadState (get), StateT)
 import qualified Data.HashTable.IO as H
 import Data.Maybe (fromJust, isJust)
 import qualified Data.Text as T
-import Parser.Ast (Expr, VDataType (Function))
+import Parser.Ast (Expr, VDataType (Function, Any))
 import TextShow (TextShow (showt))
 
 {-
@@ -34,6 +34,11 @@ makeVdtArr env exprs = do
   v <- mapM (`getTypeOfExpr` fst env) exprs
   pure $ sequence v
 
+(=#=) :: VDataType -> VDataType -> Bool
+(=#=) Any b = True
+(=#=) a Any = True
+(=#=) a b = a == b
+
 -- checkArgs takes a list of expected VDataTypes and a list of actual VDataTypes,
 -- and checks if the actual VDataType list is the same as the expected list.
 checkArgs :: [VDataType] -> [VDataType] -> T.Text -> Bool -> (Bool, Int) -> Maybe T.Text
@@ -53,7 +58,7 @@ checkArgs expArgs actualArgs fnName variadic (recursiveCall, initialIndex) = do
         if isJust (snd acc)
           then snd acc
           else
-            if uncurry (==) curr
+            if uncurry (=#=) curr
               then
                 if fst acc == arglen && variadic && not recursiveCall
                   then checkArgs (map (const (fst curr)) [1 .. argdiff]) (drop arglen actualArgs) fnName True (True, arglen)
@@ -85,14 +90,9 @@ functionAnalyser ::
   StateT Env IO AnalyserResult
 functionAnalyser acc infExpr name args expArgs variadic native = do
   env <- get
-  -- TODO check arguments to native functions when
-  -- variable arguments are available.
-
   -- Here we check if the number of passed arguments
   -- is the same as the number of expected arguments.
-  -- For now, we skip this check on native functions
-  -- since variable arguments have not been implemented.
-  if (if variadic then (>) else (/=)) (length expArgs) (length args) && not native
+  if (if variadic then (>) else (/=)) (length expArgs) (length args)
     then
       pure $
         makeLeft $
