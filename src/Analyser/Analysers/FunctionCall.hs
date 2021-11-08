@@ -12,8 +12,6 @@ import Control.Monad.State (MonadIO (liftIO), MonadState (get), StateT)
 import qualified Data.HashTable.IO as H
 import Data.Maybe (fromJust, isJust)
 import qualified Data.Text as T
-import Debug.Trace (trace)
-import GHC.List (foldl')
 import Parser.Ast (Expr, VDataType (Function))
 import TextShow (TextShow (showt))
 
@@ -36,8 +34,6 @@ makeVdtArr env exprs = do
   v <- mapM (`getTypeOfExpr` fst env) exprs
   pure $ sequence v
 
-rFoldl' list def fun = foldl' fun def list
-
 -- checkArgs takes a list of expected VDataTypes and a list of actual VDataTypes,
 -- and checks if the actual VDataType list is the same as the expected list.
 checkArgs :: [VDataType] -> [VDataType] -> T.Text -> Bool -> (Bool, Int) -> Maybe T.Text
@@ -52,7 +48,7 @@ checkArgs expArgs actualArgs fnName variadic (recursiveCall, initialIndex) = do
     -- where the int is just used to keep track of the index,
     -- and the Maybe Text is actually an encountered error,
     -- which is Nothing if no error is found.
-    rFoldl' (zip expArgs actualArgs) (1, Nothing) $ \acc curr ->
+    rFoldl (zip expArgs actualArgs) (1, Nothing) $ \acc curr ->
       ( fst acc + 1,
         if isJust (snd acc)
           then snd acc
