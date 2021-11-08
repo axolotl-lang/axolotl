@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 module Main where
 
 import Analyser.Analyser (analyseAst)
@@ -26,6 +27,11 @@ import Text.Megaparsec (errorBundlePretty, parse)
 import Text.Pretty.Simple (pPrint)
 import Transpiler.Backends.JS.JS (jsBackend, jsStdlib)
 import Transpiler.Transpiler (transpile)
+import qualified Data.Text.Encoding as B
+import Data.FileEmbed (embedFile)
+
+axlStdlib :: T.Text
+axlStdlib = B.decodeUtf8 $(embedFile "stdlib/math.axl")
 
 makeNativeFunction :: VDataType -> Def
 makeNativeFunction ret = AU.Function ret ([("args", Any)], True) [] True
@@ -42,20 +48,6 @@ main' fileName evaluate = do
   -- temporary, just a hack for now
   -- will be implemented properly when
   -- I have more time to work on it
-  let stdlib =
-        [ ("+i", Int),
-          ("+f", Float),
-          ("-i", Int),
-          ("-f", Float),
-          ("*i", Int),
-          ("*f", Float),
-          ("/i", Int),
-          ("/f", Float),
-          (">", Bool),
-          ("print", NilType),
-          ("str", String)
-        ]
-  let defs = map (second makeNativeFunction) stdlib
   case result of
     Left e -> putStrLn (errorBundlePretty e)
     Right res -> do

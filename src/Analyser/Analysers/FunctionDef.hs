@@ -151,7 +151,10 @@ analyseFunctionDef acc analyseExprs name vtype args body native = do
           -- check if the user explicitly defined a return type
           -- for this function, but returned a value of a different
           -- type. doesn't matter if type not explicitly defined.
-          if inferred || (vtype == dvdt)
+          -- also ignore if the function is a native function
+          -- since the body in axl can't be used to determine
+          -- it's return type since the body will be a placeholder
+          if inferred || (vtype == dvdt) || native
             then pure res
             else
               pure $

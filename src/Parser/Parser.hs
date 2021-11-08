@@ -67,8 +67,25 @@ nativeFunctionDef = parens func
     func = do
       rword "native defun"
       id <- identifierWithType
-      pure $ uncurry FunctionDef (fst id) ([], False) [] True
+      args <- squares $ many identifierWithType
+      let len = length args
+      -- check if only the last element is variadic
+      args' <- rFoldl
+        (zip [(1 :: Int) ..] args)
+        (pure ([], False) :: Parser ([(T.Text, VDataType)], Bool))
+        $ \acc curr -> do
+          acc <- acc
+          let val = fst acc <> [(fst . snd) curr]
+          -- if current argument is variadic
+          if (snd . snd) curr
+            then -- check if it's the last element
 
+              if fst curr == len
+                then pure (val, True)
+                else fail "Only the last argument of a function can be variadic!"
+            else -- if not variadic, just add to accumulator
+              pure (val, False)
+      pure $ uncurry FunctionDef (fst id) args' [] True
 -- (defun some-fn [(arg1: int, arg2: int, ...)] { ... })
 -- can also have variadic arguments, for example arg3 in
 -- the below example will be an array of all the strings passed

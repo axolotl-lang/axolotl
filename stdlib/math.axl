@@ -1,0 +1,11 @@
+(native defun (+i: int) [&(args: int)])
+(native defun (+f: float) [&(args: any)])
+
+(native defun (-i: int) [&(args: int)])
+(native defun (-f: float) [&(args: any)])
+
+(native defun (*i: int) [&(args: int)])
+(native defun (*f: float) [&(args: any)])
+
+(native defun (/i: int) [&(args: int)])
+(native defun (/f: float) [&(args: any)])

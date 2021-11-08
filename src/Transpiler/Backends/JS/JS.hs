@@ -2,11 +2,11 @@
 
 module Transpiler.Backends.JS.JS where
 
-import Data.FileEmbed (embedFile)
 import Data.Foldable (foldlM)
 import Data.Maybe (fromJust)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as B
+import Data.FileEmbed (embedFile)
 import Parser.Ast
   ( Expr
       ( AnonymousFunction,
