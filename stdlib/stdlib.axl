@@ -9,3 +9,6 @@
 
 (native defun (/i: int) [&(args: int)])
 (native defun (/f: float) [&(args: any)])
+
+(native defun (print: nil) [&(args: any)])
+(native defun (str: string) [&(args: any)])

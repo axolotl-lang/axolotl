@@ -12,7 +12,7 @@ import Control.Monad.State (MonadIO (liftIO), MonadState (get), StateT)
 import qualified Data.HashTable.IO as H
 import Data.Maybe (fromJust, isJust)
 import qualified Data.Text as T
-import Parser.Ast (Expr, VDataType (Function, Any))
+import Parser.Ast (Expr, VDataType (Any, Function))
 import TextShow (TextShow (showt))
 
 {-

@@ -17,17 +17,13 @@
   420
 })
 
-// multiple arguments syntax
-(defun test-fn [things: int] {
-  (print things) // [1, 2, 3, ...]
-})
-
-// multiple arguments but with given arguments
-(defun yet-another-test-fn [(one-thing: int) (another-thing: string) &(more-things: string)] {
-    (print "hello")
+(defun variadic-example [(ability: string) &(more: string)] {
+  (print "Axolotl can also do " ability)
+  (print "Here are the remaining arguments: " more)
 })
 
 (def initial-val 37)
 
 (print (arbitrary-function initial-val))
+(variadic-example "variadic function!" "abcd" "efgh" "ijkl" "mnop")
 
