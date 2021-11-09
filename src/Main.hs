@@ -55,7 +55,7 @@ main' fileName evaluate = do
 
   -- prepare to run program
   contents <- liftIO $ readFile fileName
-  result <- (liftEither . mapLeft errorBundlePretty) $ parse root fileName (pack contents)
+  result <- (liftEither . mapLeft errorBundlePretty) $ parse root fileName ("nil\n" <> pack contents)
   liftIO $ H.delete v "args"
   out <- liftIO $ analyseAst result v
   ex <- (liftEither . mapLeft unpack) $ fst out
