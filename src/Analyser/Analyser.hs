@@ -29,7 +29,7 @@ import qualified Data.HashTable.IO as H
 import Data.Maybe (fromJust, fromMaybe, isJust)
 import Data.Text as T (Text, empty, pack, toLower, unpack)
 import Parser.Ast
-  ( Expr (ArbitraryBlock, Array, Conditional, FunctionCall, FunctionDef, Nil, Root, VariableDef),
+  ( Expr (ArbitraryBlock, Array, Conditional, FunctionCall, FunctionDef, Nil, Root, VariableDef, VariableUsage),
     VDataType (Bool, Function, Inferred, NilType),
   )
 
@@ -106,6 +106,11 @@ replaceInferredVdt (VariableDef name Inferred y) gd = do
 replaceInferredVdt (FunctionCall name args) gd =
   getTypeOfExpr (FunctionCall name args) gd >>= \t ->
     pure $ Right $ FunctionCall name args
+replaceInferredVdt x@(VariableUsage name) gd = do
+  res <- getTypeOfExpr x gd
+  case res of
+    Left err -> pure $ Left err
+    Right _ -> pure $ Right x
 -- send back nodes that don't need type inference
 replaceInferredVdt x _ = pure $ Right x
 

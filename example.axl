@@ -10,7 +10,6 @@
 (def text1 "If I have ")
 (def text2 " apples to everyone, i'll be left with ")
 
-// This is a comment
 (defun arbitrary-function [(initial: int)] {
   (print "expressions are written in braces")
   (print "and the last value is returned!")
