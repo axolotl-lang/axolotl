@@ -112,7 +112,7 @@ fnTransformer isNative id args = do
         else -- if not variadic, just add to accumulator
           pure (val, False)
   body <- if isNative then pure [] else braces exprs
-  pure $ uncurry FunctionDef id args' body False
+  pure $ uncurry FunctionDef id args' body isNative
 
 arbitraryBlock :: Parser Expr
 arbitraryBlock = braces $ many expr >>= \x -> pure $ ArbitraryBlock x
