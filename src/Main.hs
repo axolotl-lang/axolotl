@@ -11,6 +11,7 @@ import Analyser.Util as AU
 import Control.Monad (void)
 import Control.Monad.Except (ExceptT, MonadError (throwError), MonadIO (liftIO), liftEither, runExceptT)
 import Data.Bifunctor (Bifunctor (second))
+import Data.Either.Combinators (mapLeft)
 import Data.FileEmbed (embedFile)
 import Data.HashTable.IO as H (delete, fromListWithSizeHint, mapM_)
 import Data.Text (Text, pack, unpack)
@@ -45,27 +46,19 @@ logError toLog = do
   hPutStr stderr $ style Bold . color Red $ "[× fatal] "
   hPutStrLn stderr toLog
 
-stringLeft :: Either (ParseErrorBundle Text Void) b -> Either String b
-stringLeft (Left x) = Left $ errorBundlePretty x
-stringLeft (Right y) = Right y
-
-stringLeft' :: Either Text b -> Either String b
-stringLeft' (Left x) = Left $ unpack x
-stringLeft' (Right y) = Right y
-
 main' :: String -> Bool -> ExceptT String IO ()
 main' fileName evaluate = do
   -- get defs from stdlib
-  resultStdlib <- liftEither $ stringLeft $ parse root fileName axlStdlib
+  resultStdlib <- (liftEither . mapLeft errorBundlePretty) $ parse root fileName axlStdlib
   v <- liftIO $ H.fromListWithSizeHint 1000 []
   outStdlib <- liftIO $ analyseAst resultStdlib v
 
   -- prepare to run program
   contents <- liftIO $ readFile fileName
-  result <- liftEither $ stringLeft $ parse root fileName (pack contents)
+  result <- (liftEither . mapLeft errorBundlePretty) $ parse root fileName (pack contents)
   liftIO $ H.delete v "args"
   out <- liftIO $ analyseAst result v
-  ex <- liftEither $ stringLeft' $ fst out
+  ex <- (liftEither . mapLeft unpack) $ fst out
   if evaluate
     then liftIO $ void $ uncurry evaluateExpression (snd out) ex
     else throwError $ unpack $ jsStdlib <> transpile jsBackend ex 0

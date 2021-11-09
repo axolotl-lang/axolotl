@@ -90,9 +90,8 @@ functionDef = parens func
       rword "defun"
       id <- optionallyTypedIdentifier
       args <- squares $ many identifierWithType
+      -- check if only the last element is variadic
       fnTransformer id args
-
--- check if only the last element is variadic
 
 fnTransformer :: (T.Text, VDataType) -> [((T.Text, VDataType), Bool)] -> Parser Expr
 fnTransformer id args = do
