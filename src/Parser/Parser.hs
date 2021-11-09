@@ -70,7 +70,7 @@ nativeFunctionDef = parens func
       args <- squares $ many identifierWithType
       let len = length args
       -- check if only the last element is variadic
-      fnTransformer (fst id) args
+      fnTransformer True (fst id) args
 
 -- (defun some-fn [(arg1: int, arg2: int, ...)] { ... })
 -- can also have variadic arguments, for example arg3 in
@@ -91,10 +91,10 @@ functionDef = parens func
       id <- optionallyTypedIdentifier
       args <- squares $ many identifierWithType
       -- check if only the last element is variadic
-      fnTransformer id args
+      fnTransformer False id args
 
-fnTransformer :: (T.Text, VDataType) -> [((T.Text, VDataType), Bool)] -> Parser Expr
-fnTransformer id args = do
+fnTransformer :: Bool -> (T.Text, VDataType) -> [((T.Text, VDataType), Bool)] -> Parser Expr
+fnTransformer isNative id args = do
   let len = length args
   args' <- rFoldl
     (zip [(1 :: Int) ..] args)
@@ -111,7 +111,7 @@ fnTransformer id args = do
             else fail "Only the last argument of a function can be variadic!"
         else -- if not variadic, just add to accumulator
           pure (val, False)
-  body <- braces exprs
+  body <- if isNative then pure [] else braces exprs
   pure $ uncurry FunctionDef id args' body False
 
 arbitraryBlock :: Parser Expr
