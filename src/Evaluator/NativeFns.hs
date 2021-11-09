@@ -38,21 +38,43 @@ getStr x = case x of
   FunctionDef txt vdt x1 exs b -> "nil"
   y -> error $ "could not get string from " <> show y
 
-evalNative :: T.Text -> VDataType -> [Expr] -> IO Expr
-evalNative "+i" Int args = pure $ IntLiteral $ round (sum (map getNumber args))
-evalNative "+f" Float args = pure $ FloatLiteral (sum (map getNumber args))
-evalNative "-i" Int args = pure $ IntLiteral $ round (foldl1 (-) (map getNumber args))
-evalNative "-f" Float args = pure $ FloatLiteral (foldl1 (-) (map getNumber args))
-evalNative "*i" Int args = pure $ IntLiteral $ round (product (map getNumber args))
-evalNative "*f" Float args = pure $ FloatLiteral (product (map getNumber args))
-evalNative "/i" Int args = pure $ IntLiteral $ round (foldl1 (/) (map getNumber args))
-evalNative "/f" Float args = pure $ FloatLiteral (foldl1 (/) (map getNumber args))
-evalNative "str" String args = pure $ StrLiteral (foldl1 (<>) (map getStr args))
-evalNative "print" NilType args = (putStrLn . T.unpack) (foldl1 (<>) (map getStr args)) >> pure Nil
-evalNative ">" Bool exprs =
-  if length exprs == 2
-    then case (head exprs, exprs !! 1) of
-      (IntLiteral iv, IntLiteral iv') -> pure $ BoolLiteral (iv > iv')
-      _ -> undefined -- TODO
-    else error "can only equality check two arguments"
-evalNative name _ _ = error $ "evaluator does not know how to execute the native function '" <> T.unpack name <> "'"
+evalNative :: (T.Text, VDataType) -> [Expr] -> IO Expr
+evalNative nt args
+  | nt == ("+i", Int) = pure $ IntLiteral $ round (sum (map getNumber args))
+  | nt == ("+f", Float) = pure $ FloatLiteral (sum (map getNumber args))
+  | nt == ("-i", Int) = pure $ IntLiteral $ round (foldl1 (-) (map getNumber args))
+  | nt == ("-f", Float) = pure $ FloatLiteral (foldl1 (-) (map getNumber args))
+  | nt == ("*i", Int) = pure $ IntLiteral $ round (product (map getNumber args))
+  | nt == ("*f", Float) = pure $ FloatLiteral (product (map getNumber args))
+  | nt == ("/i", Int) = pure $ IntLiteral $ round (foldl1 (/) (map getNumber args))
+  | nt == ("/f", Float) = pure $ FloatLiteral (foldl1 (/) (map getNumber args))
+  | nt == ("str", String) = pure $ StrLiteral (foldl1 (<>) (map getStr args))
+  | nt == ("print", NilType) = (putStrLn . T.unpack) (foldl1 (<>) (map getStr args)) >> pure Nil
+  | nt == (">", Bool)
+      || nt == (">=", Bool)
+      || nt == ("<", Bool)
+      || nt == ("<=", Bool)
+      || nt == ("/=", Bool)
+      || nt == ("==", Bool) =
+    if length args == 2
+      then case (head args, args !! 1) of
+        (IntLiteral iv, IntLiteral iv') ->
+          pure $
+            BoolLiteral
+              ( ( case fst nt of
+                    ">" -> (>)
+                    ">=" -> (>=)
+                    "<" -> (<)
+                    "<=" -> (<=)
+                    "==" -> (==)
+                    "!=" -> (/=)
+                )
+                  iv
+                  iv'
+              )
+        (FloatLiteral iv, IntLiteral iv') -> pure $ BoolLiteral (iv > fromIntegral iv')
+        (IntLiteral iv, FloatLiteral iv') -> pure $ BoolLiteral (fromIntegral iv > iv')
+        (FloatLiteral iv, FloatLiteral iv') -> pure $ BoolLiteral (iv > iv')
+        (x, y) -> error $ "Can't compare " <> show x <> " with " <> show y
+      else error "can only equality check two arguments"
+  | otherwise = error $ "evaluator does not know how to execute the native function '" <> T.unpack (fst nt) <> "'"

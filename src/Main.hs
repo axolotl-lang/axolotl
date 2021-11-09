@@ -36,7 +36,7 @@ import Transpiler.Backends.JS.JS (jsBackend, jsStdlib)
 import Transpiler.Transpiler (transpile)
 
 axlStdlib :: T.Text
-axlStdlib = B.decodeUtf8 $(embedFile "stdlib/stdlib.axl")
+axlStdlib = "nil\n" <> B.decodeUtf8 $(embedFile "stdlib/stdlib.axl")
 
 makeNativeFunction :: VDataType -> Def
 makeNativeFunction ret = AU.Function ret ([("args", Any)], True) [] True

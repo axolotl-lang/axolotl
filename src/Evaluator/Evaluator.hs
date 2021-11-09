@@ -24,7 +24,7 @@ evaluateExpression gd ld (Unary op expr) =
   analyseUnaryOp op expr
 -- replace with the result of function call
 evaluateExpression gd ld (FunctionCall name argExprs) =
-  evaluateFunctionCall gd ld name evaluateExpression argExprs evalNative
+  evaluateFunctionCall gd ld name evaluateExpression argExprs (curry evalNative)
 -- replace with the if-true (ift) or if-false (iff) expr
 evaluateExpression gd ld (Conditional cond ift iff) = do
   evaluateExpression gd ld cond >>= \case

@@ -1,14 +1,27 @@
+; addition
 (native defun (+i: int) [&(args: int)])
 (native defun (+f: float) [&(args: any)])
 
+; subtraction
 (native defun (-i: int) [&(args: int)])
 (native defun (-f: float) [&(args: any)])
 
+; multiplication
 (native defun (*i: int) [&(args: int)])
 (native defun (*f: float) [&(args: any)])
 
+; division
 (native defun (/i: int) [&(args: int)])
 (native defun (/f: float) [&(args: any)])
 
+; utility
 (native defun (print: nil) [&(args: any)])
 (native defun (str: string) [&(args: any)])
+
+; comparison
+(native defun (>: bool) [(a: int) (b: int)])
+(native defun (>=: bool) [(a: int) (b: int)])
+(native defun (<: bool) [(a: int) (b: int)])
+(native defun (<=: bool) [(a: int) (b: int)])
+(native defun (==: bool) [(a: int) (b: int)])
+(native defun (!=: bool) [(a: int) (b: int)])

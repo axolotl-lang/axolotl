@@ -9,7 +9,7 @@ import Data.Text as T (Text, pack, unpack)
 import qualified Data.Text as T
 import Data.Void (Void)
 import Parser.Ast
-  ( VDataType (ArrayOf, Bool, Float, Inferred, Int, NilType, String, Any),
+  ( VDataType (Any, ArrayOf, Bool, Float, Inferred, Int, NilType, String),
   )
 import Text.Megaparsec
   ( MonadParsec (notFollowedBy, observing, takeWhileP, try),
@@ -102,12 +102,12 @@ rword :: String -> Parser ()
 rword w = (lexeme . try) (string (pack w) *> notFollowedBy alphaNumChar)
 
 mathSymbol :: Parser Char
-mathSymbol = single '+' <|> single '-' <|> single '/' <|> single '%' <|> single '*' <|> single '>'
+mathSymbol = single '+' <|> single '-' <|> single '/' <|> single '%' <|> single '*' <|> single '>' <|> single '<' <|> single '=' <|> single '!'
 
 identifier :: Parser Text
 identifier = (lexeme . try) (p <&> pack)
   where
-    p = (:) <$> (letterChar <|> mathSymbol) <*> many (alphaNumChar <|> single '-' <|> single '?' <|> single '_')
+    p = (:) <$> (letterChar <|> mathSymbol) <*> many (alphaNumChar <|> single '-' <|> single '?' <|> single '_' <|> single '=')
 
 getTypeFromStr :: Text -> Parser VDataType
 getTypeFromStr "string" = pure String
