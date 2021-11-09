@@ -63,34 +63,25 @@ main' fileName evaluate = do
     then liftIO $ void $ uncurry evaluateExpression (snd out) ex
     else throwError $ unpack $ jsStdlib <> transpile jsBackend ex 0
 
+exceptRunner :: ExceptT String IO () -> IO ()
+exceptRunner et = do
+  val <- runExceptT et
+  case val of
+    Left err -> logError err
+    Right v -> pure v
+
 main :: IO ()
 main = do
   args <- getArgs
   case length args of
     0 -> putStrLn $ "usage: \n" <> "axl run program.axl"
     1 -> case head args of
-      "run" -> do
-        val <- runExceptT $ main' "index.axl" True
-        case val of
-          Left err -> logError err
-          Right v -> pure v
-      "transpile" -> do
-        val <- runExceptT $ main' "index.axl" False
-        case val of
-          Left err -> logError err
-          Right v -> pure v
+      "run" -> exceptRunner $ main' "index.axl" True
+      "transpile" -> exceptRunner $ main' "index.axl" False
       "version" -> putStrLn $ showVersion version
       _ -> logError $ "unknown action '" <> head args <> "'"
     2 -> case head args of
-      "run" -> do
-        val <- runExceptT $ main' (last args) True
-        case val of
-          Left err -> logError err
-          Right v -> pure v
-      "transpile" -> do
-        val <- runExceptT $ main' (last args) False
-        case val of
-          Left err -> logError err
-          Right v -> pure v
+      "run" -> exceptRunner $ main' (last args) True
+      "transpile" -> exceptRunner $ main' (last args) False
       _ -> logError $ "unknown action '" <> head args <> "'"
     _ -> logError $ "expected at most 2 arguments, got " <> show (length args)
