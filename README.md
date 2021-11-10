@@ -64,7 +64,7 @@ Variables can be declared using the `def` function, where the first argument is 
 (def (name2: string) "paul") ;; creates a variable 'name2' with the value "paul"
 (print name " and " name2 " are friends") ;; cody and paul are friends
 ```
-Variables are accessible in their immediate scope **after** they are defined, and are immutable; as of 0.3.0.0 alpha there's no way to mutate them, though something is planned.
+Variables are accessible in their immediate scope **after** they are defined, and are immutable; as of 0.3.0.5 alpha there's no way to mutate them, though something is planned.
 
 ## Functions
 Functions can be defined using the `defun` function, where the first argument is the name of the function (optionally typed), the second argument is an array of arguments to it (which must be manually typed), and the third argument is the set of expressions to evaluate inside braces (this creates a new scope that includes all the defined variables above the function definition, and the arguments to it:
@@ -103,7 +103,7 @@ Functions can be recursive, but make sure to manually define the return type, si
 ```
   
 ## Mathematical Functions
-Only the operators +, -, * and / are available for now, each is a function that can take any number of arguments.
+For calculation, the operators +, -, * and / are available as of v0.3.0.5, each is a function that can take any number of arguments.
 
 There are two versions of these operators - one that returns an integer, and one that returns a float.
 The integer version rounds the result if it gets a float, and the float version converts to float if it gets an int.
@@ -128,9 +128,10 @@ For example,
 (print (/i 2 4.95)) ;; 0
 (print (/f 2 4.95)) ;; 0.40404040404040403
 ```
+Comparison operators `>`, `<`, `>=`, `<=`, `==`, `!=` are available. They take two arguments and return a bool.
   
 # Utility Functions
-As of 0.3.0.0 alpha, there's only two utility functions - `str` and `print`
+As of 0.3.0.5 alpha, there's only two utility functions - `str` and `print`
 ```clojure
 ;; str can be used to concatenate any number of arguments of any data type to form a string
 ;; print prints the arguments it gets to stdout with a newline
