@@ -1,5 +1,5 @@
-(defun factorial [(num: int)] {
-  (if (== num 1) 1 (*i num (factorial (-i num 1))))
+(defun (factorial: int) [(num: int)] {
+  (if (== num 1) 1 (* num (factorial (- num 1))))
 })
 
 (print (factorial 5))

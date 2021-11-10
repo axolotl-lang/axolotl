@@ -28,6 +28,7 @@ import Data.Either.Combinators (fromLeft', fromRight, fromRight', isLeft, maybeT
 import qualified Data.HashTable.IO as H
 import Data.Maybe (fromJust, fromMaybe, isJust)
 import Data.Text as T (Text, empty, pack, toLower, unpack)
+import Debug.Trace (trace)
 import Parser.Ast
   ( Expr (ArbitraryBlock, Array, Conditional, FunctionCall, FunctionDef, Nil, Root, VariableDef, VariableUsage),
     VDataType (Bool, Function, Inferred, NilType),
@@ -80,7 +81,12 @@ analyseExprs acc' curr = do
       -- cond  :: Expr -> the condition to evaluate, must return bool
       -- ift   :: Expr -> the Expr to return if cond is **true**
       -- iff   :: Expr -> the Expr to return if cond is **false**
-      Conditional cond ift iff -> analyseConditional acc cond ift iff
+      Conditional cond ift iff -> do
+        env <- get
+        v <- sequence . fst <$> liftIO (runStateT (foldl analyseExprs (pure []) [cond, ift, iff]) env)
+        case v of
+          Left err -> pure $ makeLeft err
+          Right _ -> analyseConditional acc cond ift iff
       -- body  :: [Expr] -> the set of exprs that the block is formed by
       ArbitraryBlock body -> analyseArbitraryBlock acc body analyseExprs
       -- name   :: Text                        -> the name of the function

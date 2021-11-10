@@ -30,7 +30,6 @@ data Expr
   | VariableDef {name :: Text, vtype :: VDataType, val :: Expr} -- like (def username 20)
   | Unary UnaryOp Expr -- only - (for now)
   -- like (defun (function-name: VDataType) (arg1: DataType, arg2: DataType) { ... })
-  -- the bool is true if the function is a native function
   | FunctionDef
       { name :: Text,
         returnType :: VDataType,

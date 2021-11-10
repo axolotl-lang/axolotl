@@ -97,7 +97,12 @@ getTypeOfExpr ex gd = case ex of
           x -> pure $ Left $ "Variable of type '" <> pack (show x) <> "' is not callable"
         Analyser.Util.Function vdt _ _ _ -> pure $ Right vdt
         Analyser.Util.Argument vdt -> undefined -- TODO
-        Analyser.Util.IncompleteFunction args vdt native -> pure $ Right vdt
+        Analyser.Util.IncompleteFunction args vdt native -> do
+          case vdt of
+            Inferred -> do
+              putStrLn "You're trying to call a recursive function without the manual definition of it's return type!"
+              pure $ Right vdt
+            _ -> pure $ Right vdt
   ArbitraryBlock exprs -> getTypeOfExpr (Prelude.last exprs) gd
   -- ideally we want type of ift to be the same as the type of iff
   -- but analyseExprs will bail out if type of ift /= type of iff
