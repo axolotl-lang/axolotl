@@ -3,6 +3,7 @@ module Parser.Parser where
 import Analyser.Util (rFoldl)
 import Data.Either.Combinators (isRight)
 import qualified Data.Text as T
+import Debug.Trace (trace)
 import Parser.Ast (Expr (..), UnaryOp (Neg), VDataType)
 import Parser.Combinators
   ( Parser,
@@ -118,7 +119,7 @@ arbitraryBlock :: Parser Expr
 arbitraryBlock = braces $ many expr >>= \x -> pure $ ArbitraryBlock x
 
 functionCall :: Parser Expr
-functionCall = parens $ identifier >>= \x -> FunctionCall x <$> exprs
+functionCall = parens $ identifier >>= \x -> desugarExpr . FunctionCall x <$> exprs
 
 conditional :: Parser Expr
 conditional = parens $ rword "if" >> Conditional <$> expr <*> expr <*> expr

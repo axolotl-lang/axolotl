@@ -2,6 +2,7 @@ module Sugar.Sugar where
 
 import Analyser.Util (rFoldl)
 import qualified Data.Text as T
+import Debug.Trace (trace)
 import Parser.Ast (Expr (FloatLiteral, FunctionCall))
 
 mFilter :: [a] -> (a -> Bool) -> [a]
