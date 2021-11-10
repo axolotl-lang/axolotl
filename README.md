@@ -92,7 +92,7 @@ Functions can have variadic arguments:
 ; Here are the remaining arguments: ["efgh","ijkl","mnop"]
 ```
   
-Functions can be recursive, but make sure to manually define to return type, because it isn't possible to infer types mid-function yet:
+Functions can be recursive, but make sure to manually define the return type, since it isn't possible to infer the return type of a function during it's execution yet:
 ```clojure
 (defun (factorial: int) [(num: int)] {
   (if (== num 1) 1 (* num (factorial (- num 1))))
