@@ -78,6 +78,30 @@ Functions can be defined using the `defun` function, where the first argument is
 (print (get-goodbye "Matt" "evening")) ;; have a good evening, Matt
 ```
   
+Functions can have variadic arguments:
+```clojure
+(defun variadic-example [(ability: string) &(more: string)] {
+  (print "Axolotl can also do " ability)
+  (print "Here are the remaining arguments: " more)
+})
+
+(variadic-example "variadic functions!" "abcd" "efgh" "ijkl" "mnop")
+
+; output:
+; Axolotl can also do variadic functions!
+; Here are the remaining arguments: ["efgh","ijkl","mnop"]
+```
+  
+Functions can be recursive, but make sure to manually define to return type, because it isn't possible to infer types mid-function yet:
+```clojure
+(defun (factorial: int) [(num: int)] {
+  (if (== num 1) 1 (* num (factorial (- num 1))))
+})
+
+(print (factorial 5))
+; outputs 120
+```
+  
 ## Mathematical Functions
 Only the operators +, -, * and / are available for now, each is a function that can take any number of arguments.
 
