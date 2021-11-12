@@ -118,7 +118,7 @@ arbitraryBlock :: Parser Expr
 arbitraryBlock = braces $ many expr <&> ArbitraryBlock
 
 functionCall :: Parser Expr
-functionCall = parens $ identifier >>= \x -> FunctionCall x <$> exprs
+functionCall = parens $ (identifier <&> FunctionCall) <*> exprs
 
 conditional :: Parser Expr
 conditional = parens $ rword "if" >> Conditional <$> expr <*> expr <*> expr
