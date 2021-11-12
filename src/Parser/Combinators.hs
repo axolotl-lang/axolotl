@@ -1,3 +1,5 @@
+{-# LANGUAGE TupleSections #-}
+
 module Parser.Combinators where
 
 import Control.Monad (void)
@@ -98,8 +100,8 @@ boolLit =
     Right _ -> pure True
 
 -- Utils
-rword :: String -> Parser ()
-rword w = (lexeme . try) (string (pack w) *> notFollowedBy alphaNumChar)
+rword :: Text -> Parser ()
+rword w = (lexeme . try) (string w *> notFollowedBy alphaNumChar)
 
 mathSymbol :: Parser Char
 mathSymbol = single '+' <|> single '-' <|> single '/' <|> single '%' <|> single '*' <|> single '>' <|> single '<' <|> single '=' <|> single '!'
@@ -120,7 +122,7 @@ getTypeFromStr "any" = pure Any
 getTypeFromStr "function" = fail "not yet supported"
 getTypeFromStr x =
   if T.take 2 (T.reverse x) == "]["
-    then getTypeFromStr (T.take (T.length x - 2) x) >>= \x -> pure (ArrayOf x)
+    then getTypeFromStr (T.take (T.length x - 2) x) <&> ArrayOf
     else fail "type does not exist"
 
 identifierWithType :: Parser ((Text, VDataType), Bool)
@@ -138,4 +140,4 @@ identifierWithType = do
 optionallyTypedIdentifier :: Parser (Text, VDataType)
 optionallyTypedIdentifier =
   try (fst <$> identifierWithType)
-    <|> (identifier >>= \x -> pure (x, Inferred))
+    <|> (identifier <&> (,Inferred))

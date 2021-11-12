@@ -2,8 +2,8 @@ module Parser.Parser where
 
 import Analyser.Util (rFoldl)
 import Data.Either.Combinators (isRight)
+import Data.Functor ((<&>))
 import qualified Data.Text as T
-import Debug.Trace (trace)
 import Parser.Ast (Expr (..), UnaryOp (Neg), VDataType)
 import Parser.Combinators
   ( Parser,
@@ -27,40 +27,39 @@ import Text.Megaparsec (MonadParsec (observing, try), many, single, (<|>))
 import Text.Megaparsec.Char (numberChar)
 
 intLiteral :: Parser Expr
-intLiteral = intLit >>= \x -> pure $ IntLiteral x
+intLiteral = intLit <&> IntLiteral
 
 floatLiteral :: Parser Expr
-floatLiteral = floatLit >>= \x -> pure $ FloatLiteral x
+floatLiteral = floatLit <&> FloatLiteral
 
 charLiteral :: Parser Expr
-charLiteral = charLit >>= \x -> pure $ CharLiteral x
+charLiteral = charLit <&> CharLiteral
 
 strLiteral :: Parser Expr
-strLiteral = strLit >>= \x -> pure $ StrLiteral x
+strLiteral = strLit <&> StrLiteral
 
 boolLiteral :: Parser Expr
-boolLiteral = boolLit >>= \x -> pure $ BoolLiteral x
+boolLiteral = boolLit <&> BoolLiteral
 
 arrayLiteral :: Parser Expr
 arrayLiteral = squares arrExp
   where
-    arrExp = commaSep arraySupportedExpr >>= \x -> pure $ Array x
+    arrExp = commaSep arraySupportedExpr <&> Array
 
 nil :: Parser Expr
 nil = nilLit >> pure Nil
 
 variable :: Parser Expr
-variable = identifier >>= \x -> pure $ VariableUsage x
+variable = identifier <&> VariableUsage
 
 unary :: Parser Expr
-unary = single '-' >> try floatLiteral <|> intLiteral >>= \num -> pure $ Unary Neg num
+unary = single '-' >> try floatLiteral <|> intLiteral <&> Unary Neg
 
 variableDef :: Parser Expr
 variableDef =
   parens $
     rword "def" >> optionallyTypedIdentifier >>= \x ->
-      expr >>= \y ->
-        pure $ uncurry VariableDef x y
+      expr <&> uncurry VariableDef x
 
 nativeFunctionDef :: Parser Expr
 nativeFunctionDef = parens func
@@ -116,10 +115,10 @@ fnTransformer isNative id args = do
   pure $ uncurry FunctionDef id args' body isNative
 
 arbitraryBlock :: Parser Expr
-arbitraryBlock = braces $ many expr >>= \x -> pure $ ArbitraryBlock x
+arbitraryBlock = braces $ many expr <&> ArbitraryBlock
 
 functionCall :: Parser Expr
-functionCall = parens $ identifier >>= \x -> desugarExpr . FunctionCall x <$> exprs
+functionCall = parens $ identifier >>= \x -> FunctionCall x <$> exprs
 
 conditional :: Parser Expr
 conditional = parens $ rword "if" >> Conditional <$> expr <*> expr <*> expr
@@ -139,24 +138,27 @@ arraySupportedExpr =
 
 expr :: Parser Expr
 expr =
-  desugarExpr <$> try floatLiteral
-    <|> intLiteral
-    <|> charLiteral
-    <|> strLiteral
-    <|> boolLiteral
-    <|> arrayLiteral
-    <|> nil
-    <|> variable
-    <|> try functionDef
-    <|> try nativeFunctionDef
-    <|> try variableDef
-    <|> try conditional
-    <|> functionCall
-    <|> arbitraryBlock
-    <|> unary
+  desugarExpr <$> exprOptions
+  where
+    exprOptions =
+      try floatLiteral
+        <|> intLiteral
+        <|> charLiteral
+        <|> strLiteral
+        <|> boolLiteral
+        <|> arrayLiteral
+        <|> nil
+        <|> variable
+        <|> try functionDef
+        <|> try nativeFunctionDef
+        <|> try variableDef
+        <|> try conditional
+        <|> functionCall
+        <|> arbitraryBlock
+        <|> unary
 
 exprs :: Parser [Expr]
-exprs = map desugarExpr <$> many expr
+exprs = many expr
 
 root :: Parser Expr
-root = exprs >>= \x -> pure $ Root x
+root = exprs <&> Root
