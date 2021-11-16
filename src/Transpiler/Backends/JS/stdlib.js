@@ -13,4 +13,5 @@ const __divide__int = (...args) => Math.round(__divide__float(...args));
 const __divide__float = (...args) => args.reduce((acc, curr) => acc / curr);
 
 const __str = (...args) => args.reduce((acc, curr) => acc + curr);
+const __equals = (a, b) => a == b;
 const __print = console.log;
