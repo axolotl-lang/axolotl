@@ -2,11 +2,11 @@
 
 module Transpiler.Backends.JS.JS where
 
+import Data.FileEmbed (embedFile)
 import Data.Foldable (foldlM)
 import Data.Maybe (fromJust)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as B
-import Data.FileEmbed (embedFile)
 import Parser.Ast
   ( Expr
       ( AnonymousFunction,
@@ -52,6 +52,7 @@ sanitiseFunctionCall "*i" = "__multiply__int"
 sanitiseFunctionCall "*f" = "__multiply__float"
 sanitiseFunctionCall "/i" = "__divide__int"
 sanitiseFunctionCall "/f" = "__divide__float"
+sanitiseFunctionCall "==" = "__equals"
 sanitiseFunctionCall "str" = "__str"
 sanitiseFunctionCall "print" = "__print"
 sanitiseFunctionCall y = sanitiseDefinition y
@@ -144,4 +145,13 @@ jsBackend e@(Conditional cond ift iff) il = do
   let cond' = jsBackend cond il
   let ift' = jsBackend ift il
   let iff' = jsBackend iff il
-  "if (" <> cond' <> ") {" <> ift' <> "} else {" <> iff' <> "}"
+  cond' <> " ?\n"
+    <> tab
+    <> tab
+    <> ift'
+    <> "\n"
+    <> tab
+    <> " :\n"
+    <> tab
+    <> tab
+    <> iff'
