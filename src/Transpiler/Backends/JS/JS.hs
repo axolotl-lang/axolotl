@@ -133,7 +133,7 @@ jsBackend e@(FunctionDef name _ args body native) il = do
               )
               indexedArgs
           )
-          ") => "
+          ") "
   let body' = " {" <> returningRoot (Root body) (il + 1) <> "\n}"
   header <> args' <> body'
 
