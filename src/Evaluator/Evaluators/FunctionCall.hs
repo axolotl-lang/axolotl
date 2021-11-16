@@ -48,7 +48,7 @@ evaluateFunctionCall gd ld name evaluateExpression argExprs evalNative = do
                     AU.Variable
                       (snd a)
                       if i == arglen && variadic
-                        then Array (drop arglen argExprs')
+                        then Array (drop (arglen - 1) argExprs')
                         else d
                     )
               )
