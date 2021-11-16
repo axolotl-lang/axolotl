@@ -20,7 +20,7 @@ import qualified Data.Text.Encoding as B
 import Data.Version (showVersion)
 import Data.Void (Void)
 import Evaluator.Evaluator (evaluateExpression)
-import Parser.Ast (VDataType (Any, Bool, Float, Int, NilType, String))
+import Parser.Ast (Expr (Root), VDataType (Any, Bool, Float, Int, NilType, String))
 import Parser.Parser (exprs, root)
 import Paths_axolotl (version)
 import System.Console.Pretty
@@ -41,6 +41,10 @@ axlStdlib = "nil\n" <> B.decodeUtf8 $(embedFile "stdlib/stdlib.axl")
 makeNativeFunction :: VDataType -> Def
 makeNativeFunction ret = AU.Function ret ([("args", Any)], True) [] True
 
+nukeNull :: Expr -> Expr
+nukeNull (Root exprs) = Root (drop 1 exprs)
+nukeNull x = x
+
 logError :: String -> IO ()
 logError toLog = do
   hPutStr stderr $ style Bold . color Red $ "[× fatal] "
@@ -57,11 +61,11 @@ main' fileName evaluate = do
   contents <- liftIO $ readFile fileName
   result <- (liftEither . mapLeft errorBundlePretty) $ parse root fileName ("nil\n" <> pack contents)
   liftIO $ H.delete v "args"
-  out <- liftIO $ analyseAst result v
+  out <- liftIO $ analyseAst (nukeNull result) v
   ex <- (liftEither . mapLeft unpack) $ fst out
   if evaluate
     then liftIO $ void $ uncurry evaluateExpression (snd out) ex
-    else throwError $ unpack $ jsStdlib <> transpile jsBackend ex 0
+    else liftIO $ putStrLn $ unpack $ jsStdlib <> transpile jsBackend ex 0
 
 exceptRunner :: ExceptT String IO () -> IO ()
 exceptRunner et = do
