@@ -40,11 +40,11 @@ jobs:
       run: cabal update
 
     - name: Install dependencies
-      run: cabal new-build -O2 --disable-debug-info --enable-executable-stripping --enable-library-stripping --disable-debug-info --disable-library-for-ghci all --only-dependencies
+      run: cabal new-build -O2 --disable-debug-info --enable-executable-stripping --enable-library-stripping --disable-debug-info --disable-library-for-ghci all --ghc-options "-funfolding-use-threshold=16 -fexcess-precision -optc-O3 -optc-ffast-math -no-recomp" --only-dependencies
       working-directory: ${{ github.workspace }}
 
     - name: Build
-      run: cabal new-build -O2 --disable-debug-info --enable-executable-stripping --enable-library-stripping --disable-debug-info --disable-library-for-ghci all
+      run: cabal new-build -O2 --disable-debug-info --enable-executable-stripping --enable-library-stripping --disable-debug-info --disable-library-for-ghci all --ghc-options "-funfolding-use-threshold=16 -fexcess-precision -optc-O3 -optc-ffast-math -no-recomp"
       working-directory: ${{ github.workspace }}
 
     - name: Copy executable
