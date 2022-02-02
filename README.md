@@ -2,8 +2,8 @@
 
 Downloads (Github Actions builds):  
 Linux: https://nightly.link/axolotl-lang/axolotl/workflows/haskell/master/axl-Linux.zip  
-macOS: https://nightly.link/axolotl-lang/axolotl/workflows/haskell/master/axl-Linux.zip  
-Windows: https://nightly.link/axolotl-lang/axolotl/workflows/haskell/master/axl-Linux.zip  
+macOS: https://nightly.link/axolotl-lang/axolotl/workflows/haskell/master/axl-macOS.zip  
+Windows: https://nightly.link/axolotl-lang/axolotl/workflows/haskell/master/axl-Windows.zip  
 
 ## NOTE: syntax likely to change soon
 🌊 a statically typed lisp-like programming language
