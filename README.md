@@ -121,7 +121,7 @@ For division, the float variant will always be used by default.
 For example,
 ```clojure
 (print (+i 2 4.95)) ;; 7
-(print (+ 2 5)) ;; 7 -- since there's no float in the arguments, it automatically uses the float variant
+(print (+ 2 5)) ;; 7 -- since there's no float in the arguments, it automatically uses the int variant
 (print (+f 2 4.95)) ;; 6.95
 (print (+ 2 4.95)) ;; 6.95 -- since there's a float in the arguments, it automatically uses the float variant
 
